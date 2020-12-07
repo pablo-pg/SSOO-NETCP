@@ -24,7 +24,7 @@ netcp: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 
-run: clean dfa2g
+run: clean netcp
 	clear
 	./netcp
 

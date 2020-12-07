@@ -25,7 +25,7 @@ Socket::Socket(const sockaddr_in& address) {
                     sizeof(address));
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
-                            "no se pudo asignar la dirección");
+                            "falló bind");
   } else {
     std::cout << "Se pudo hacer bind" << std::endl;
   }

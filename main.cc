@@ -25,7 +25,7 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 
 int main() {
   try {
-    Socket socket(make_ip_address(65524, ""));
+    Socket socket(make_ip_address(65525, ""));
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -51,11 +51,11 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
   direction.sin_port = htons(port);
   std::string empty_string = "INADDR_ANY";
   if (ip_address.empty())
-    direction.sin_addr.s_addr = inet_aton(empty_string.c_str(),
-                                          &direction.sin_addr);
+    direction.sin_addr.s_addr = htonl(inet_aton(empty_string.c_str(),
+                                          &direction.sin_addr));
   else
-    direction.sin_addr.s_addr = inet_aton(ip_address.c_str(),
-                                          &direction.sin_addr);
+    direction.sin_addr.s_addr = htonl(inet_aton(ip_address.c_str(),
+                                          &direction.sin_addr));
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);
