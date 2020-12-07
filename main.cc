@@ -25,14 +25,14 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 
 int main() {
   try {
-    Socket socket(make_ip_address(65524, "127.0.0.1"));
+    Socket socket(make_ip_address(65524, ""));
   }
   catch(std::bad_alloc& e) {
-    std::cerr << "mytalk" << ": memoria insuficiente\n";
+    std::cerr << "netcp" << ": memoria insuficiente\n";
     return 1;
   }
   catch(std::system_error& e) {
-    std::cerr << "mitalk" << ": " << e.what() << '\n';
+    std::cerr << "netcp" << ": " << e.what() << '\n';
     return 2;
   }
   catch (...) {

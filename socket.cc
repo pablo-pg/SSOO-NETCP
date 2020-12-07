@@ -17,6 +17,8 @@ Socket::Socket(const sockaddr_in& address) {
   if (fd_ < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo crear el socket");
+  } else {
+    std::cout << "Se pudo crear el socket" << std::endl;
   }
   // Se asigna la dirección al socket
   int result = bind(fd_, reinterpret_cast<const sockaddr*>(&address),
@@ -24,6 +26,8 @@ Socket::Socket(const sockaddr_in& address) {
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo asignar la dirección");
+  } else {
+    std::cout << "Se pudo hacer bind" << std::endl;
   }
 }
 
