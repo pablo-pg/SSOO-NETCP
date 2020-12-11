@@ -25,7 +25,12 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 
 int main() {
   try {
-    Socket socket(make_ip_address(65525, ""));
+    Message message;
+    std::string text = "hola";
+    std::copy(begin(text), end(text), begin(message.data));
+    std::cout << "Mensaje: " << message.data.data() << std::endl;
+    Socket socket(make_ip_address(3000, "127.0.0.1"));
+    socket.send_to(message, make_ip_address(1, ""));
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -49,13 +54,14 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
   sockaddr_in direction{};
   direction.sin_family = AF_INET;
   direction.sin_port = htons(port);
-  std::string empty_string = "INADDR_ANY";
-  if (ip_address.empty())
-    direction.sin_addr.s_addr = htonl(inet_aton(empty_string.c_str(),
-                                          &direction.sin_addr));
-  else
-    direction.sin_addr.s_addr = htonl(inet_aton(ip_address.c_str(),
-                                          &direction.sin_addr));
+  if (ip_address.empty()) {
+    direction.sin_addr.s_addr = htonl(INADDR_ANY);
+  } else {
+    inet_aton(ip_address.c_str(), &direction.sin_addr);
+  }
+std::cout << std::endl;
+std::cout << "Puerto: " << direction.sin_port << " (" << port << ")" << std::endl;
+std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address << ")" << std::endl << std::endl;
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);

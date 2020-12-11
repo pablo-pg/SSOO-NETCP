@@ -13,12 +13,11 @@
 Socket::Socket(const sockaddr_in& address) {
   // Se crea el socket
   fd_ = socket(AF_INET, SOCK_DGRAM, 0);
-  // Si no se pudo crear:
   if (fd_ < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo crear el socket");
   } else {
-    std::cout << "Se pudo crear el socket" << std::endl;
+    std::cout << "(flag) socket num: " << fd_ << std::endl;
   }
   // Se asigna la dirección al socket
   int result = bind(fd_, reinterpret_cast<const sockaddr*>(&address),
@@ -27,13 +26,13 @@ Socket::Socket(const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "falló bind");
   } else {
-    std::cout << "Se pudo hacer bind" << std::endl;
+    std::cout << "(flag) bind num: " << result << std::endl;
   }
 }
 
-
 Socket::~Socket() {
-  // close(0);
+  close(fd_);
+std::cout << "close (fd): " << fd_ << std::endl;
 }
 
 void Socket::send_to(const Message& message, const sockaddr_in& address) {
@@ -43,6 +42,8 @@ void Socket::send_to(const Message& message, const sockaddr_in& address) {
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
+  } else {
+    std::cout << "Mensaje enviado" << std::endl;
   }
 }
 
@@ -55,3 +56,4 @@ void Socket::receive_from(Message& message, sockaddr_in& address) {
                             "no se pudo recibir el mensaje");
   }
 }
+
