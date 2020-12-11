@@ -15,7 +15,7 @@
 CC=g++
 CFLAGS=-O0 -g -Wall
 DEPS = socket.h
-OBJ = socket.o main.o
+OBJ = socket.o netcp.o
 
 %.o: %.cc $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
