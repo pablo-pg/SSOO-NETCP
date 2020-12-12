@@ -18,25 +18,24 @@
 #include <iostream>
 
 #include "./socket.h"
+#include "./message.h"
+#include "./file.h"
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
-
+// Message set_data(Message& message, const std::string& text);
 
 int main() {
   try {
+    std::string filename = "in.txt";
+    File file(filename);
+
     Message message;
-    std::string text = "hola que tal";
-    std::copy(begin(text), end(text), begin(message.data));
-    for (int i = (int)text.size(); i < message.data.size(); i++) {
-      message.data.at(i) = 0;
-    }
-    std::cout << "Mensaje: " << message.data.data() << std::endl;
+    message = set_data(file.GetData().at(0));
+    std::cout << "Mensaje:\n" << message.data.data() << std::endl;
+
     Socket remote(make_ip_address(3000, "127.0.0.3"));
-    // Socket recibido(make_ip_address(2000, "127.0.0.3"));
-    // Message m_recibido;
     remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
-    // recibido.receive_from(m_recibido, make_ip_address(1, "127.0.0.1"));
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -74,3 +73,12 @@ std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address <<
   }
   return direction;
 }
+
+// Message set_data(Message& message, const std::string& text) {
+//   message.data_size = text.size();
+//   message.data.resize(message.data_size);
+//   for (size_t i {0}; i < text.size(); i++) {
+//     message.data.at(i) = text.at(i);
+//   }
+//   return message;
+// }

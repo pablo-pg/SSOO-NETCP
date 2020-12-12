@@ -23,19 +23,9 @@
 #include <exception>
 #include <iostream>
 #include <array>
-// #include <vector>
+#include <vector>
 
-#define kSizeofMessage 1024
-#define PATH_MAX 1024
-
-struct Message {
-  std::array<char, PATH_MAX> filename;
-  std::array<char, kSizeofMessage> data;    // El mensaje
-  size_t data_size;
-  size_t file_size;
-};
-
-
+#include "./message.h"
 
 class Socket {
  public:

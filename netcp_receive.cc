@@ -37,7 +37,7 @@ int main() {
     Message m_recibido;
     // socket.send_to(message, make_ip_address(1, "127.0.0.3"));
     local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
-    std::cout << m_recibido.data.data() <<std::endl;
+    std::cout << "Mensaje recibido: " << m_recibido.data.data() <<std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";

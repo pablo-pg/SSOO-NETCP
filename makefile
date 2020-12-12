@@ -15,17 +15,17 @@
 CC=g++
 CFLAGS=-O0 -g -Wall
 DEPS = socket.h
-OBJ = socket.o netcp_send.o 
-OBJ2 = netcp_receive.o socket.o
+OBJ = socket.o file.o netcp_send.o 
+OBJ2 = netcp_receive.o file.o socket.o
 
 %.o: %.cc $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 
-netcp_receive: $(OBJ2)
+netcp_send: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-netcp_send: $(OBJ)
+netcp_receive: $(OBJ2)
 	$(CC) $(CFLAGS) -o $@ $^
 
 run: clean netcp_send netcp_receive
