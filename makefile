@@ -15,21 +15,25 @@
 CC=g++
 CFLAGS=-O0 -g -Wall
 DEPS = socket.h
-OBJ = socket.o netcp.o
+OBJ = socket.o netcp_send.o 
+OBJ2 = netcp_receive.o socket.o
 
 %.o: %.cc $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-netcp: $(OBJ)
+
+netcp_receive: $(OBJ2)
 	$(CC) $(CFLAGS) -o $@ $^
 
+netcp_send: $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^
 
-run: clean netcp
+run: clean netcp_send netcp_receive
 	clear
-	./netcp
+	./netcp_send
 
 clean:
-	rm -f hellomake *.o netcp
+	rm -f hellomake *.o netcp_receive netcp_send
 
 clear: clean
 

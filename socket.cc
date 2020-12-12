@@ -51,7 +51,6 @@ void Socket::send_to(const Message& message, const sockaddr_in& address) {
 void Socket::receive_from(Message& message, const sockaddr_in& address) {
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
-  std::cout << "1" << std::endl;
   int result = recvfrom(fd_, &message, sizeof(message), 0,
                       reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
