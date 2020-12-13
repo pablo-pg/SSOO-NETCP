@@ -43,21 +43,3 @@ std::string File::GetStringData() const {
   }
   return all_lines.str();
 }
-
-// std::string Message::GetStringMessage() const {
-//   std::string message(data_.begin(), data_.end());
-//   return message;
-// }
-
-// void Message::SetSize(const int size) {
-//   data_size_ = static_cast<size_t>(size);
-//   data_.resize(data_size_);
-// }
-
-// void Message::SetMessage(const std::string& text) {
-//   std::copy(begin(text), end(text), begin(data_));
-//   data_.at(text.size()) = '\0';
-//   for (size_t i = text.size(); i < data_.size(); i++) {
-//     data_.at(i) = 0;
-//   }
-// }

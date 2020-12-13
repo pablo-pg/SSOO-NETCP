@@ -18,8 +18,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <unistd.h>
-// #include <cerrno>       // para errno
-// #include <cstring>      // para std::strerror()
 #include <exception>
 #include <iostream>
 #include <array>
@@ -33,7 +31,6 @@ class Socket {
   ~Socket();
 
   void send_to(const Message& message, const sockaddr_in& address);
-  // void send_to(const Message& message, const Socket& socket);
   // void send_to(const std::vector<uint8_t>& data, const sockaddr_in& address);
   void receive_from(Message& message, const sockaddr_in& address);
   // void receive_from(std::vector<uint8_t>& data, sockaddr_in& address);

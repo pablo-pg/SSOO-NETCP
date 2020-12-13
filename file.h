@@ -26,9 +26,6 @@ class File {
 
   std::vector<std::string> GetData() const;
   std::string GetStringData() const;
-  // std::string GetStringMessage() const;
-  // void SetSize(const int size);
-  // void SetMessage(const std::string& text);
 
  private:
   void SetData_();

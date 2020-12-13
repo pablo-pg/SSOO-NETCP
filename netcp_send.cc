@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include <system_error>
 #include <iostream>
+#include <cstring>
 
 #include "./socket.h"
 #include "./message.h"
@@ -23,17 +24,17 @@
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
-// Message set_data(Message& message, const std::string& text);
+
+
+Message SetInfo(const std::string& text, const std::string& filename);
+
 
 int main() {
   try {
     std::string filename = "in.txt";
     File file(filename);
-
     Message message;
-    message = set_data(file.GetData().at(0));
-    std::cout << "Mensaje:\n" << message.data.data() << std::endl;
-
+    message = SetInfo(file.GetStringData(), filename);
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
   }
@@ -74,11 +75,17 @@ std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address <<
   return direction;
 }
 
-// Message set_data(Message& message, const std::string& text) {
-//   message.data_size = text.size();
-//   message.data.resize(message.data_size);
-//   for (size_t i {0}; i < text.size(); i++) {
-//     message.data.at(i) = text.at(i);
-//   }
-//   return message;
-// }
+Message SetInfo(const std::string& text, const std::string& filename) {
+  Message message;
+  message.file_size = filename.size();
+  for (size_t i {0}; i < filename.size(); i++) {
+    message.filename.at(i) = filename.at(i);
+  }
+  message.data_size = text.size();
+  for (size_t i {0}; i < text.size(); i++) {
+    message.data.at(i) = text.at(i);
+  }
+  message.data.at(text.size()) = '\0';
+  return message;
+}
+

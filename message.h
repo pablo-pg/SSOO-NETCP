@@ -24,19 +24,7 @@ struct Message {
   size_t data_size;
   size_t file_size;
   std::array<char, PATH_MAX> filename;
-  std::vector<char> data;    // El mensaje
+  std::array<char, 1024> data;    // El mensaje
 };
-
-// Message set_data(const std::string& text);
-
-Message set_data(const std::string& text) {
-  Message message;
-  message.data_size = text.size();
-  message.data.resize(message.data_size);
-  for (size_t i {0}; i < text.size(); i++) {
-    message.data.at(i) = text.at(i);
-  }
-  return message;
-}
 
 #endif  // MESSAGE_H_
