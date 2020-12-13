@@ -38,9 +38,9 @@ int main() {
     metadata = SetMetadata(file.GetStringData(), filename);
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, make_ip_address(2000, "127.0.0.1"));
-    for (int i {0}; i < metadata.packages_number; i++) {
-std::cout << "Paquete " << i << std::endl;
-      message = SetInfo(file.GetStringData(), i);
+    for (int package {0}; package < metadata.packages_number; package++) {
+// std::cout << "Paquete: " << package << std::endl;
+      message = SetInfo(file.GetStringData(), package);
       remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
     }
   }
@@ -97,12 +97,22 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
 
 Message SetInfo(const std::string& text, const int& package) {
   Message message;
-  int pack = package;
-  for (int i {package * MESSAGE_SIZE - MESSAGE_SIZE};
-       i < (package * MESSAGE_SIZE + MESSAGE_SIZE); i++) {
-    if ((size_t)i < text.size()) {
-std::cout << i << "  -  " <<text.at(i) << std::endl;
-      message.data.at(i - (MESSAGE_SIZE * pack)) = text.at(i);
+  int pack = package + 1;
+  // Primer paquete
+  if (package == 0) {
+    for (int i {0}; i < MESSAGE_SIZE; i++) {
+      if ((size_t)i < text.size()) {
+        message.data.at(i) = text.at(i);
+      }
+    }
+  } else {
+  // Demás paquetes
+    for (int i {0}; i < MESSAGE_SIZE; i++) {
+      if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
+        message.data.at(i) = text.at(i + MESSAGE_SIZE * package);
+      } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
+        message.data.at(i) = '\0';
+      }
     }
   }
   return message;

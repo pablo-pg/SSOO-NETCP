@@ -28,6 +28,7 @@ int main() {
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
     Message m_recibido;
+    std::vector<Message> all_message;
     local.receive_from(metadata, make_ip_address(3000, "127.0.0.3"));
     std::cout << "Datos de:" << metadata.filename.data()
               << "\nSeparado en: " << metadata.packages_number
@@ -35,7 +36,12 @@ int main() {
     // local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
     for (int i {0}; i < metadata.packages_number; i++) {
       local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
-      std::cout << "\n\nArchivo:\n" << m_recibido.data.data() << std::endl;
+      std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
+      all_message.push_back(m_recibido);
+    }
+    std::cout << "Archivo completo:" << std::endl;
+    for (Message message : all_message) {
+      std::cout << message.data.data();
     }
   }
   catch(std::bad_alloc& e) {
