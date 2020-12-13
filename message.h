@@ -32,7 +32,7 @@ struct FileMetadata {
     }
     return num;
   }
-  int message_number = calculate_message_num(file_size);
+  int packages_number = calculate_message_num(file_size);
 };
 
 // int calculate_nessage_num(const size_t& size) {

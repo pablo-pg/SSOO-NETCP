@@ -29,11 +29,14 @@ int main() {
     FileMetadata metadata;
     Message m_recibido;
     local.receive_from(metadata, make_ip_address(3000, "127.0.0.3"));
-    if (!m_recibido.data.empty())
-      // std::cout << "Fichero:   " << m_recibido.filename.data() << std::endl;
-    std::cout << "Datos:" << std::endl << metadata.filename.data()
-              << "\nSeparado en: " << metadata.message_number
+    std::cout << "Datos de:" << metadata.filename.data()
+              << "\nSeparado en: " << metadata.packages_number
               << "\nTamaño: " << metadata.file_size << std::endl;
+    // local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
+    for (int i {0}; i < metadata.packages_number; i++) {
+      local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
+      std::cout << "\n\nArchivo:\n" << m_recibido.data.data() << std::endl;
+    }
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";

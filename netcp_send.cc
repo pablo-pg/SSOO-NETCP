@@ -27,7 +27,7 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 
 
 FileMetadata SetMetadata(const std::string& text, const std::string& filename);
-Message SetInfo(const std::string& text);
+Message SetInfo(const std::string& text, const int& package);
 
 int main() {
   try {
@@ -36,9 +36,13 @@ int main() {
     FileMetadata metadata;
     Message message;
     metadata = SetMetadata(file.GetStringData(), filename);
-    message = SetInfo(file.GetStringData());
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, make_ip_address(2000, "127.0.0.1"));
+    for (int i {0}; i < metadata.packages_number; i++) {
+std::cout << "Paquete " << i << std::endl;
+      message = SetInfo(file.GetStringData(), i);
+      remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
+    }
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -68,8 +72,10 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
     inet_aton(ip_address.c_str(), &direction.sin_addr);
   }
 std::cout << std::endl;
-std::cout << "Puerto: " << direction.sin_port << " (" << port << ")" << std::endl;
-std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address << ")" << std::endl << std::endl;
+std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
+          << std::endl;
+std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
+          << ")" << std::endl << std::endl;
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);
@@ -85,15 +91,19 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
   }
   metadata.filename.at(filename.size()) = '\0';
   metadata.file_size = text.size();
-  metadata.message_number = metadata.calculate_message_num(metadata.file_size);
+  metadata.packages_number = metadata.calculate_message_num(metadata.file_size);
   return metadata;
 }
 
-Message SetInfo(const std::string& text) {
+Message SetInfo(const std::string& text, const int& package) {
   Message message;
-  for (size_t i {0}; i < message.size - 1; i++) {
-    if (i < text.size())
-      message.data.at(i) = text.at(i);
+  int pack = package;
+  for (int i {package * MESSAGE_SIZE - MESSAGE_SIZE};
+       i < (package * MESSAGE_SIZE + MESSAGE_SIZE); i++) {
+    if ((size_t)i < text.size()) {
+std::cout << i << "  -  " <<text.at(i) << std::endl;
+      message.data.at(i - (MESSAGE_SIZE * pack)) = text.at(i);
+    }
   }
   return message;
 }
