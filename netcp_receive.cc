@@ -26,11 +26,14 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 int main() {
   try {
     Socket local(make_ip_address(2000, "127.0.0.1"));
+    FileMetadata metadata;
     Message m_recibido;
-    local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
+    local.receive_from(metadata, make_ip_address(3000, "127.0.0.3"));
     if (!m_recibido.data.empty())
       // std::cout << "Fichero:   " << m_recibido.filename.data() << std::endl;
-    std::cout << "Mensaje:" << std::endl << m_recibido.data.data() << std::endl;
+    std::cout << "Datos:" << std::endl << metadata.filename.data()
+              << "\nSeparado en: " << metadata.message_number
+              << "\nTamaño: " << metadata.file_size << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";

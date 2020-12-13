@@ -31,9 +31,9 @@ class Socket {
   ~Socket();
 
   void send_to(const Message& message, const sockaddr_in& address);
-  // void send_to(const std::vector<uint8_t>& data, const sockaddr_in& address);
+  void send_to(const FileMetadata& metadata, const sockaddr_in& address);
   void receive_from(Message& message, const sockaddr_in& address);
-  // void receive_from(std::vector<uint8_t>& data, sockaddr_in& address);
+  void receive_from(FileMetadata& metadata, const sockaddr_in& address);
 
   sockaddr_in get_address() const {return address_;}
 

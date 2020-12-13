@@ -33,10 +33,12 @@ int main() {
   try {
     std::string filename = "in.txt";
     File file(filename);
+    FileMetadata metadata;
     Message message;
+    metadata = SetMetadata(file.GetStringData(), filename);
     message = SetInfo(file.GetStringData());
     Socket remote(make_ip_address(3000, "127.0.0.3"));
-    remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
+    remote.send_to(metadata, make_ip_address(2000, "127.0.0.1"));
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -83,13 +85,13 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
   }
   metadata.filename.at(filename.size()) = '\0';
   metadata.file_size = text.size();
+  metadata.message_number = metadata.calculate_message_num(metadata.file_size);
   return metadata;
 }
 
 Message SetInfo(const std::string& text) {
   Message message;
   for (size_t i {0}; i < message.size - 1; i++) {
-    std::cout << i << std::endl;
     if (i < text.size())
       message.data.at(i) = text.at(i);
   }
