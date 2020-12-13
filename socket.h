@@ -18,24 +18,12 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <unistd.h>
-// #include <cerrno>       // para errno
-// #include <cstring>      // para std::strerror()
 #include <exception>
 #include <iostream>
 #include <array>
-// #include <vector>
+#include <vector>
 
-#define kSizeofMessage 1024
-#define PATH_MAX 1024
-
-struct Message {
-  std::array<char, PATH_MAX> filename;
-  std::array<char, kSizeofMessage> data;    // El mensaje
-  size_t data_size;
-  size_t file_size;
-};
-
-
+#include "./message.h"
 
 class Socket {
  public:
@@ -43,7 +31,6 @@ class Socket {
   ~Socket();
 
   void send_to(const Message& message, const sockaddr_in& address);
-  // void send_to(const Message& message, const Socket& socket);
   // void send_to(const std::vector<uint8_t>& data, const sockaddr_in& address);
   void receive_from(Message& message, const sockaddr_in& address);
   // void receive_from(std::vector<uint8_t>& data, sockaddr_in& address);

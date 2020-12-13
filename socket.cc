@@ -44,11 +44,12 @@ void Socket::send_to(const Message& message, const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
   } else {
-    std::cout << "Mensaje enviado: " << message.data.data() << std::endl;
+    std::cout << "Mensaje enviado:\n" << message.data.data() << std::endl;
   }
 }
 
 void Socket::receive_from(Message& message, const sockaddr_in& address) {
+  std::cout << "Esperando mensaje..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
   int result = recvfrom(fd_, &message, sizeof(message), 0,
@@ -56,6 +57,8 @@ void Socket::receive_from(Message& message, const sockaddr_in& address) {
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo recibir el mensaje");
+  } else {
+    std::cout << "Mensaje recibido" << std::endl;
   }
 }
 

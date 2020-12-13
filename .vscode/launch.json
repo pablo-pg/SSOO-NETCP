@@ -8,7 +8,7 @@
       "name": "g++ - Compilar y depurar el archivo activo",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${fileDirname}/netcp",
+      "program": "${fileDirname}/netcp_send",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
