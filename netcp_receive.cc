@@ -28,9 +28,9 @@ int main() {
     Socket local(make_ip_address(2000, "127.0.0.1"));
     Message m_recibido;
     local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
-    if (!m_recibido.filename.empty())
-      std::cout << "Fichero:   " << m_recibido.filename.data() << std::endl;
-    std::cout << "Mensaje:" << std::endl << m_recibido.data.data();
+    if (!m_recibido.data.empty())
+      // std::cout << "Fichero:   " << m_recibido.filename.data() << std::endl;
+    std::cout << "Mensaje:" << std::endl << m_recibido.data.data() << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";

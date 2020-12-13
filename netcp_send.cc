@@ -26,15 +26,15 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
 
 
-Message SetInfo(const std::string& text, const std::string& filename);
-
+FileMetadata SetMetadata(const std::string& text, const std::string& filename);
+Message SetInfo(const std::string& text);
 
 int main() {
   try {
     std::string filename = "in.txt";
     File file(filename);
     Message message;
-    message = SetInfo(file.GetStringData(), filename);
+    message = SetInfo(file.GetStringData());
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
   }
@@ -75,17 +75,24 @@ std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address <<
   return direction;
 }
 
-Message SetInfo(const std::string& text, const std::string& filename) {
+
+FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
+  FileMetadata metadata;
+  for (size_t i{0}; i < filename.size(); i++) {
+    metadata.filename.at(i) = filename.at(i);
+  }
+  metadata.filename.at(filename.size()) = '\0';
+  metadata.file_size = text.size();
+  return metadata;
+}
+
+Message SetInfo(const std::string& text) {
   Message message;
-  message.file_size = filename.size();
-  for (size_t i {0}; i < filename.size(); i++) {
-    message.filename.at(i) = filename.at(i);
+  for (size_t i {0}; i < message.size - 1; i++) {
+    std::cout << i << std::endl;
+    if (i < text.size())
+      message.data.at(i) = text.at(i);
   }
-  message.data_size = text.size();
-  for (size_t i {0}; i < text.size(); i++) {
-    message.data.at(i) = text.at(i);
-  }
-  message.data.at(text.size()) = '\0';
   return message;
 }
 
