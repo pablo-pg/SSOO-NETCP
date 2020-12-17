@@ -29,9 +29,14 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 FileMetadata SetMetadata(const std::string& text, const std::string& filename);
 Message SetInfo(const std::string& text, const int& package);
 
-int main() {
+int main(int argc, char* argv[]) {
   try {
-    std::string filename = "in.txt";
+    std::string filename;
+    if (argc == 2) {
+      filename = argv[1];
+    } else {
+      throw std::invalid_argument("No se ha introducido fichero a enviar.");
+    }
     File file(filename);
     FileMetadata metadata;
     Message message;
@@ -51,6 +56,9 @@ int main() {
   catch(std::system_error& e) {
     std::cerr << "netcp" << ": " << e.what() << '\n';
     return 2;
+  }
+  catch(std::invalid_argument& e) {
+    std::cerr << "netcp: " << "introduzca solo 1 archivo que copiar" << "\n";
   }
   catch (...) {
     std::cout << "Error desconocido\n";
@@ -97,24 +105,26 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
 
 Message SetInfo(const std::string& text, const int& package) {
   Message message;
-  int pack = package + 1;
   // Primer paquete
   if (package == 0) {
-    for (int i {0}; i < MESSAGE_SIZE; i++) {
+    for (int i {0}; i < MESSAGE_SIZE - 1; i++) {
       if ((size_t)i < text.size()) {
         message.data.at(i) = text.at(i);
+      } else {
+        message.data.at(i) = '\0';
       }
     }
   } else {
   // Demás paquetes
-    for (int i {0}; i < MESSAGE_SIZE; i++) {
+    for (int i {0}; i < MESSAGE_SIZE - 1; i++) {
       if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
-        message.data.at(i) = text.at(i + MESSAGE_SIZE * package);
+        message.data.at(i) = text.at(i + (MESSAGE_SIZE * package) - 1);
       } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
         message.data.at(i) = '\0';
       }
     }
   }
+  message.data.at(MESSAGE_SIZE - 1) = '\0';
   return message;
 }
 
