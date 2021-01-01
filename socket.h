@@ -33,7 +33,7 @@ class Socket {
   void send_to(const Message& message, const sockaddr_in& address);
   void send_to(const FileMetadata& metadata, const sockaddr_in& address);
   Message receive_from(const sockaddr_in& address);
-  void receive_from(FileMetadata& metadata, const sockaddr_in& address);
+  FileMetadata receive_metadata(const sockaddr_in& address);
 
   sockaddr_in get_address() const {return address_;}
 

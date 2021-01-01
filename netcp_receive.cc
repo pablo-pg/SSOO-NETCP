@@ -29,13 +29,13 @@ int main() {
     FileMetadata metadata;
     Message m_recibido;
     std::vector<Message> all_message;
-    local.receive_from(metadata, make_ip_address(3000, "127.0.0.3"));
+    sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
+    metadata = local.receive_metadata(address_to_receive);
     std::cout << "Datos de:" << metadata.filename.data()
               << "\nSeparado en: " << metadata.packages_number
               << "\nTamaño: " << metadata.file_size << std::endl;
-    sockaddr_in address = make_ip_address(3000, "127.0.0.3");
     for (int i {0}; i < metadata.packages_number; i++) {
-      m_recibido = local.receive_from(address);
+      m_recibido = local.receive_from(address_to_receive);
       std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
       all_message.push_back(m_recibido);
     }

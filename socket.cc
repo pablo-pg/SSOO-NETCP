@@ -77,7 +77,8 @@ Message Socket::receive_from(const sockaddr_in& address) {
   }
 }
 
-void Socket::receive_from(FileMetadata& metadata, const sockaddr_in& address) {
+FileMetadata Socket::receive_metadata(const sockaddr_in& address) {
+  FileMetadata metadata;
   std::cout << "Esperando datos..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
@@ -88,6 +89,7 @@ void Socket::receive_from(FileMetadata& metadata, const sockaddr_in& address) {
                             "no se pudieron recibir los datos");
   } else {
     std::cout << "Datos recibidos" << std::endl;
+    return metadata;
   }
 }
 

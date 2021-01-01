@@ -41,12 +41,12 @@ int main(int argc, char* argv[]) {
     FileMetadata metadata;
     Message message;
     metadata = SetMetadata(file.GetData(), filename);
+    sockaddr_in address_to_send = make_ip_address(2000, "127.0.0.1");
     Socket remote(make_ip_address(3000, "127.0.0.3"));
-    remote.send_to(metadata, make_ip_address(2000, "127.0.0.1"));
+    remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
-// std::cout << "Paquete: " << package << std::endl;
       message = SetInfo(file.GetData(), package);
-      remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
+      remote.send_to(message, address_to_send);
     }
   }
   catch(std::bad_alloc& e) {
