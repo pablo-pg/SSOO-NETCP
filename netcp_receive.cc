@@ -33,9 +33,9 @@ int main() {
     std::cout << "Datos de:" << metadata.filename.data()
               << "\nSeparado en: " << metadata.packages_number
               << "\nTamaño: " << metadata.file_size << std::endl;
-    // local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
+    sockaddr_in address = make_ip_address(3000, "127.0.0.3");
     for (int i {0}; i < metadata.packages_number; i++) {
-      local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
+      m_recibido = local.receive_from(address);
       std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
       all_message.push_back(m_recibido);
     }
