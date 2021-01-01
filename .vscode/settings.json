@@ -1,7 +1,5 @@
 {
   "files.associations": {
-    "system_error": "cpp",
-    "vector": "cpp",
     "array": "cpp",
     "atomic": "cpp",
     "bit": "cpp",
@@ -19,6 +17,7 @@
     "cwctype": "cpp",
     "deque": "cpp",
     "unordered_map": "cpp",
+    "vector": "cpp",
     "exception": "cpp",
     "algorithm": "cpp",
     "functional": "cpp",
@@ -30,6 +29,7 @@
     "random": "cpp",
     "string": "cpp",
     "string_view": "cpp",
+    "system_error": "cpp",
     "tuple": "cpp",
     "type_traits": "cpp",
     "utility": "cpp",

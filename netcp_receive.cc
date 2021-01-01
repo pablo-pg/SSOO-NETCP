@@ -26,11 +26,23 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 int main() {
   try {
     Socket local(make_ip_address(2000, "127.0.0.1"));
+    FileMetadata metadata;
     Message m_recibido;
-    local.receive_from(m_recibido, make_ip_address(3000, "127.0.0.3"));
-    if (!m_recibido.filename.empty())
-      std::cout << "Fichero:   " << m_recibido.filename.data() << std::endl;
-    std::cout << "Mensaje:" << std::endl << m_recibido.data.data();
+    std::vector<Message> all_message;
+    sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
+    metadata = local.receive_metadata(address_to_receive);
+    std::cout << "Datos de:" << metadata.filename.data()
+              << "\nSeparado en: " << metadata.packages_number
+              << "\nTamaño: " << metadata.file_size << std::endl;
+    for (int i {0}; i < metadata.packages_number; i++) {
+      m_recibido = local.receive_from(address_to_receive);
+      std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
+      all_message.push_back(m_recibido);
+    }
+    std::cout << "Archivo completo:" << std::endl;
+    for (Message message : all_message) {
+      std::cout << message.data.data();
+    }
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -60,8 +72,10 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
     inet_aton(ip_address.c_str(), &direction.sin_addr);
   }
 std::cout << std::endl;
-std::cout << "Puerto: " << direction.sin_port << " (" << port << ")" << std::endl;
-std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address << ")" << std::endl << std::endl;
+std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
+          << std::endl;
+std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
+          << ")" << std::endl << std::endl;
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);

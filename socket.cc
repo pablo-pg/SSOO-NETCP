@@ -44,11 +44,25 @@ void Socket::send_to(const Message& message, const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
   } else {
-    std::cout << "Mensaje enviado:\n" << message.data.data() << std::endl;
+    std::cout << "Paquete enviado:\n" << message.data.data() << std::endl;
   }
 }
 
-void Socket::receive_from(Message& message, const sockaddr_in& address) {
+void Socket::send_to(const FileMetadata& metadata, const sockaddr_in& address) {
+  int result = sendto(fd_, &metadata, sizeof(metadata), 0,
+                      reinterpret_cast<const sockaddr*>(&address),
+                      sizeof(address));
+  if (result < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se pudo enviar los datos del archivo");
+  } else {
+    std::cout << "Datos enviado del archivo:\"" << metadata.filename.data()
+              << "\"" << std::endl;
+  }
+}
+
+Message Socket::receive_from(const sockaddr_in& address) {
+  Message message;
   std::cout << "Esperando mensaje..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
@@ -59,6 +73,23 @@ void Socket::receive_from(Message& message, const sockaddr_in& address) {
                             "no se pudo recibir el mensaje");
   } else {
     std::cout << "Mensaje recibido" << std::endl;
+    return message;
+  }
+}
+
+FileMetadata Socket::receive_metadata(const sockaddr_in& address) {
+  FileMetadata metadata;
+  std::cout << "Esperando datos..." << std::endl;
+  socklen_t src_len = sizeof(address);
+  sockaddr_in remote_address = address;
+  int result = recvfrom(fd_, &metadata, sizeof(metadata), 0,
+                      reinterpret_cast<sockaddr*>(&remote_address), &src_len);
+  if (result < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se pudieron recibir los datos");
+  } else {
+    std::cout << "Datos recibidos" << std::endl;
+    return metadata;
   }
 }
 

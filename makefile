@@ -28,9 +28,12 @@ netcp_send: $(OBJ)
 netcp_receive: $(OBJ2)
 	$(CC) $(CFLAGS) -o $@ $^
 
+
+all: clean netcp_receive netcp_send
+
 run: clean netcp_send netcp_receive
 	clear
-	./netcp_send
+	./netcp_receive
 
 clean:
 	rm -f hellomake *.o netcp_receive netcp_send

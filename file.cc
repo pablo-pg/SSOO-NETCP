@@ -11,35 +11,36 @@
 
 #include "./file.h"
 
-File::File(std::string& file_name) {
+File::File(const std::string& file_name) {
   file_name_ = file_name;
-  file_input.open(file_name);
-  data_.resize(0);
-  SetData_();
+  file_fd = open(file_name.c_str(), O_RDONLY);
+  if (file_fd == -1) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se pudo abrir el fichero");
+  }
+  struct stat buf{};
+  fstat(file_fd, &buf);
+  file_size_ = buf.st_size;
+  data_.resize(file_size_);
+  Read();
 }
 
 File::~File() {
-if (file_input.is_open())
-  file_input.close();
+close(file_fd);
+file_name_.clear();
 data_.clear();
 data_.resize(0);
 data_.shrink_to_fit();
 }
 
-void File::SetData_() {
-  std::string line;
-  while (getline(file_input, line)) {
-    data_.push_back(line);
+void File::Read() {
+  int sz;
+  sz = read(file_fd, &data_[0], file_size_);
+  std::cout << sz << std::endl;
+  if (sz < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se pudo leer el fichero");
   }
 }
 
-std::vector<std::string> File::GetData() const {return data_;}
-
-std::string File::GetStringData() const {
-  std::stringstream all_lines;
-  for (std::string line : data_) {
-    all_lines << line;
-    all_lines << "\n";
-  }
-  return all_lines.str();
-}
+std::string File::GetData() const {return data_;}
