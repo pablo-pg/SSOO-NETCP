@@ -12,26 +12,30 @@
 #ifndef FILE_H_
 #define FILE_H_
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <array>
-#include <fstream>
-#include <sstream>
+
 
 class File {
  public:
-  File(std::string& file_name);
+  explicit File(const std::string& file_name);
   ~File();
 
-  std::vector<std::string> GetData() const;
-  std::string GetStringData() const;
+  std::string GetData() const;
 
  private:
-  void SetData_();
+  void Read();  // Método que lee
   std::string file_name_;
-  std::ifstream file_input;
-  std::vector<std::string> data_;
+  int file_size_;
+  int file_fd;
+  std::string data_;
 };
 
 #endif  // FILE_H_

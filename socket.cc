@@ -44,7 +44,7 @@ void Socket::send_to(const Message& message, const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
   } else {
-    std::cout << "Mensaje enviado:\n" << message.data.data() << std::endl;
+    std::cout << "Paquete enviado:\n" << message.data.data() << std::endl;
   }
 }
 

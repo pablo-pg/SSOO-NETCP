@@ -40,12 +40,12 @@ int main(int argc, char* argv[]) {
     File file(filename);
     FileMetadata metadata;
     Message message;
-    metadata = SetMetadata(file.GetStringData(), filename);
+    metadata = SetMetadata(file.GetData(), filename);
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, make_ip_address(2000, "127.0.0.1"));
     for (int package {0}; package < metadata.packages_number; package++) {
 // std::cout << "Paquete: " << package << std::endl;
-      message = SetInfo(file.GetStringData(), package);
+      message = SetInfo(file.GetData(), package);
       remote.send_to(message, make_ip_address(2000, "127.0.0.1"));
     }
   }

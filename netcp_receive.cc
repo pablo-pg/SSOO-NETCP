@@ -72,8 +72,10 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
     inet_aton(ip_address.c_str(), &direction.sin_addr);
   }
 std::cout << std::endl;
-std::cout << "Puerto: " << direction.sin_port << " (" << port << ")" << std::endl;
-std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address << ")" << std::endl << std::endl;
+std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
+          << std::endl;
+std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
+          << ")" << std::endl << std::endl;
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);
