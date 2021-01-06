@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2020
  * 
  */
+
 #include "./socket.h"
 
 Socket::Socket(const sockaddr_in& address) {

@@ -1,42 +1,29 @@
 /**
- * @file main.cc
+ * @file main_functions.cpp
  * @author Pablo Pérez González (alu0101318318@ull.edu.es)
- * @brief Main para hacer un netcp
+ * @brief Funciones principales del main separadas para mejor organización
  * @version 0.1
- * @date 2020-12-07
+ * @date 2021-01-06
  * 
- * @copyright Copyright (c) 2020
+ * @copyright Copyright (c) 2021
  * 
  */
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <system_error>
-#include <iostream>
-#include <cstring>
-
-#include "./socket.h"
-#include "./message.h"
-#include "./file.h"
-
-sockaddr_in make_ip_address(int port, const std::string& ip_address =
-                            std::string());
+#include "./main_functions.h"
 
 
-FileMetadata SetMetadata(const std::string& text, const std::string& filename);
-Message SetInfo(const std::string& text, const int& package);
+void help() {
+  std::cout << "Práctica de Sistemas Operativos. Netcp\nEste programa envía y"
+            << " recibe ficheros.\n\nPara enviar use:\t./netcp send FICHERO\n"
+            << "Para recibir use:\t./netcp receive" << std::endl;
+  exit(0);
+}
 
-int main(int argc, char* argv[]) {
+
+int send(const char* argv) {
   try {
     std::string filename;
-    if (argc == 2) {
-      filename = argv[1];
-    } else {
-      throw std::invalid_argument("No se ha introducido fichero a enviar.");
-    }
+    filename = argv;
     File file(filename);
     FileMetadata metadata;
     Message message;
@@ -66,6 +53,44 @@ int main(int argc, char* argv[]) {
   }
   return 0;
 }
+
+
+int receive() {
+    try {
+    Socket local(make_ip_address(2000, "127.0.0.1"));
+    FileMetadata metadata;
+    Message m_recibido;
+    std::vector<Message> all_message;
+    sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
+    metadata = local.receive_metadata(address_to_receive);
+    std::cout << "Datos de:" << metadata.filename.data()
+              << "\nSeparado en: " << metadata.packages_number
+              << "\nTamaño: " << metadata.file_size << std::endl;
+    for (int i {0}; i < metadata.packages_number; i++) {
+      m_recibido = local.receive_from(address_to_receive);
+      std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
+      all_message.push_back(m_recibido);
+    }
+    std::cout << "Archivo completo:" << std::endl;
+    for (Message message : all_message) {
+      std::cout << message.data.data();
+    }
+  }
+  catch(std::bad_alloc& e) {
+    std::cerr << "netcp" << ": memoria insuficiente\n";
+    return 1;
+  }
+  catch(std::system_error& e) {
+    std::cerr << "netcp" << ": " << e.what() << '\n';
+    return 2;
+  }
+  catch (...) {
+    std::cout << "Error desconocido\n";
+    return 99;
+  }
+  return 0;
+}
+
 
 
 
@@ -103,6 +128,7 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
   return metadata;
 }
 
+
 Message SetInfo(const std::string& text, const int& package) {
   Message message;
   // Primer paquete
@@ -127,4 +153,3 @@ Message SetInfo(const std::string& text, const int& package) {
   message.data.at(MESSAGE_SIZE - 1) = '\0';
   return message;
 }
-
