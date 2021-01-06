@@ -12,15 +12,18 @@
 #ifndef FILE_H_
 #define FILE_H_
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <array>
 #include <exception>
+#include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <array>
 
 
 class File {
@@ -32,9 +35,12 @@ class File {
 
  private:
   void Read();  // Método que lee
+  template<typename T> std::unique_ptr<T, std::function<void(T*)>>
+          map(int prot, size_t num = 1, off_t offset = 0);  // Mapeo de memoria
+  int file_fd_;
   std::string file_name_;
   int file_size_;
-  int file_fd;
+  struct stat file_info_;
   std::string data_;
 };
 
