@@ -33,25 +33,34 @@ int main(int argc, char* argv[]) {
   try {
     if (argc == 1) {
       throw std::invalid_argument("No se ha indicado ninguna operación.\n"
-                                  "Use el parámetro \"-h\" para leer ayuda");
+                                  "Use el parámetro \"-h\" para leer ayuda.");
     }
     if (argc == 2) {
       if (argv[1] == help_text || argv[1] == help_text2) {
         help();
       } else if (argv[1] == receive_text) {
         receive();
+      } else if (argv[1] == send_text) {
+        throw std::invalid_argument("No ha indicado ningún archivo que enviar."
+                                    "\n");
+      } else {
+        throw std::invalid_argument("La operación indicada no es válida.\n"
+                                  "Use el parámetro \"-h\" para leer ayuda.");
       }
     } else if (argc == 3) {
       if (argv[1] == send_text) {
         send(argv[2]);
+      } else {
+        throw std::invalid_argument("La operación indicada no es válida.\n"
+                                  "Use el parámetro \"-h\" para leer ayuda.");
       }
     } else {
-      throw std::invalid_argument("No se ha introducido fichero a enviar o se"
-                            " ha puesto un mal argumento.\nUse ./netcp --help"
-                            " para saber qué argumentos acepta el programa.");
+      throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
+                            "Este programa solo permite enviar un fichero.\n"
+                            "Use el parámetro \"-h\" para leer ayuda.");
     }
   }
   catch(std::invalid_argument& e) {
-    std::cerr << "netcp: " << "introduzca solo 1 archivo que copiar" << "\n";
+    std::cerr << "netcp: " << e.what() << std::endl;
   }
 }
