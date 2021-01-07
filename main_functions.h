@@ -33,7 +33,8 @@ int receive();
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
 
-FileMetadata SetMetadata(const std::string& text, const std::string& filename);
+FileMetadata SetMetadata(const std::string& text, const std::string& filename,
+                          const struct stat& meta_info);
 Message SetInfo(const std::string& text, const int& package);
 
 

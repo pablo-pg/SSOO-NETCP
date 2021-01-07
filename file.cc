@@ -27,6 +27,25 @@ File::File(const std::string& file_name) {
   Read();
 }
 
+File::File(const std::string& file_name, const struct stat& metadata) {
+  file_name_ = file_name;
+  int flags = O_CREAT | O_RDWR;
+  file_fd_ = open(file_name.c_str(), flags, metadata.st_mode);
+  if (file_fd_ == -1) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se pudo abrir el fichero");
+  }
+  // Guardo en buf toda la info del archivo (size, permisos,...)
+  file_size_ = metadata.st_size;   // Guardo el tamaño del archivo
+  file_info_ = metadata;
+  data_.resize(file_size_);
+  int trunc = ftruncate(file_fd_, metadata.st_size);
+  if (trunc < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "no se puede establecer el tamaño del archivo");
+  }
+}
+
 File::~File() {
 close(file_fd_);
 file_name_.clear();
@@ -40,9 +59,9 @@ template<typename T> std::unique_ptr<T, std::function<void(T*)>>
 File::map(int prot, size_t num, off_t offset) {
   num = 1;
   offset = 0;
-  void* mapped_mem = mmap(nullptr, num * sizeof(T), prot, MAP_SHARED, file_fd_,
+  mapped_mem_ = mmap(nullptr, num * sizeof(T), prot, MAP_SHARED, file_fd_,
                           offset);
-  if (mapped_mem == MAP_FAILED) {
+  if (mapped_mem_ == MAP_FAILED) {
     throw std::system_error(errno, std::system_category(), "Fallo en mmap()");
   }
   auto mmap_deleter = [num](T* addr) {
@@ -50,7 +69,7 @@ File::map(int prot, size_t num, off_t offset) {
       addr,               // Puntero a la región a liberar (devuelto por mmap())
     num * sizeof(T));     // Tamaño de la porción a liberar. La Liberamos toda.
   };
-  return { static_cast<T*>(mapped_mem), mmap_deleter };
+  return { static_cast<T*>(mapped_mem_), mmap_deleter };
 }
 
 
@@ -72,4 +91,15 @@ void File::Read() {
   }
 }
 
-std::string File::GetData() const {return data_;}
+
+void File::SetData(const std::string& text) {
+  data_ = text;
+  auto memory_region = map<uint8_t>(PROT_READ, file_size_);
+  const uint8_t* memory_region_begin = memory_region.get();
+  const uint8_t* memory_region_end = memory_region_begin + file_size_;
+  uint position = 0;
+  for (const uint8_t *p = memory_region_begin; p < memory_region_end; ++p) {
+    // *p = data_.at(position);
+    position++;
+  }
+}

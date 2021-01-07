@@ -27,7 +27,7 @@ int send(const char* argv) {
     File file(filename);
     FileMetadata metadata;
     Message message;
-    metadata = SetMetadata(file.GetData(), filename);
+    metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo());
     sockaddr_in address_to_send = make_ip_address(2000, "127.0.0.1");
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
@@ -60,21 +60,23 @@ int receive() {
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
     Message m_recibido;
-    std::vector<Message> all_message;
     sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
     metadata = local.receive_metadata(address_to_receive);
+    // Chivatos del metadata
     std::cout << "Datos de:" << metadata.filename.data()
               << "\nSeparado en: " << metadata.packages_number
               << "\nTamaño: " << metadata.file_size << std::endl;
+    std::string string_filename(metadata.filename.data());
+    // El archivo donde se guardará el mensaje recibido
+    File file_to_receive("elpepe.txt", metadata.file_info);
+    std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number; i++) {
       m_recibido = local.receive_from(address_to_receive);
-      std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
-      all_message.push_back(m_recibido);
+      // std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
+      total_text += m_recibido.data.data();
     }
-    std::cout << "Archivo completo:" << std::endl;
-    for (Message message : all_message) {
-      std::cout << message.data.data();
-    }
+    file_to_receive.SetData(total_text);
+    std::cout << "Archivo completo:\n" << total_text << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -92,7 +94,7 @@ int receive() {
 }
 
 
-
+// FUNCIONES SECUNDARIAS
 
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address) {
@@ -117,7 +119,8 @@ std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
 }
 
 
-FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
+FileMetadata SetMetadata(const std::string& text, const std::string& filename,
+                          const struct stat& meta_info) {
   FileMetadata metadata;
   for (size_t i{0}; i < filename.size(); i++) {
     metadata.filename.at(i) = filename.at(i);
@@ -125,6 +128,7 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename) {
   metadata.filename.at(filename.size()) = '\0';
   metadata.file_size = text.size();
   metadata.packages_number = metadata.calculate_message_num(metadata.file_size);
+  metadata.file_info = meta_info;
   return metadata;
 }
 

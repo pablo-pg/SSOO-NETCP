@@ -28,13 +28,17 @@
 
 class File {
  public:
-  explicit File(const std::string& file_name);
+  explicit File(const std::string& file_name);          // Fichero que se envía
+  File(const std::string& file_name, const struct stat& metadata);  // Se recibe
   ~File();
 
-  std::string GetData() const;
+  std::string GetData() const {return data_;}
+  struct stat GetMetaInfo() const {return file_info_;}
+  void* GetMappedMem() const {return mapped_mem_;}
+  void SetData(const std::string& text);
 
  private:
-  void Read();  // Método que lee
+  void Read();  // Método que mapea en memoria
   template<typename T> std::unique_ptr<T, std::function<void(T*)>>
           map(int prot, size_t num = 1, off_t offset = 0);  // Mapeo de memoria
   int file_fd_;
@@ -42,6 +46,7 @@ class File {
   int file_size_;
   struct stat file_info_;
   std::string data_;
+  void* mapped_mem_;
 };
 
 #endif  // FILE_H_
