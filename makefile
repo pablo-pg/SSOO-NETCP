@@ -33,6 +33,6 @@ withfile: clean netcp
 	./netcp send prueba.txt
 
 clean:
-	rm -f hellomake *.o netcp
+	rm -f hellomake *.o netcp salida.txt
 
 clear: clean

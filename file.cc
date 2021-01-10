@@ -82,8 +82,8 @@ void File::Read() {
   //   throw std::system_error(errno, std::system_category(),
   //                           "no se pudo leer el fichero");
   // }
-  auto memory_region = map<uint8_t>(PROT_READ, file_size_);
-  const uint8_t* memory_region_begin = memory_region.get();
+  unmap_region_ = map<uint8_t>(PROT_READ, file_size_);
+  const uint8_t* memory_region_begin = unmap_region_.get();
   const uint8_t* memory_region_end = memory_region_begin + file_size_;
   uint position = 0;
   for (const uint8_t* p = memory_region_begin; p < memory_region_end; ++p) {

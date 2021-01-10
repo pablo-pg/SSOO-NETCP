@@ -33,7 +33,8 @@ int send(const char* argv) {
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
       message = SetInfo(file.GetData(), package);
-      remote.send_to(message, address_to_send);
+      remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
+                      address_to_send, sizeof(message));
     }
   }
   catch(std::bad_alloc& e) {
