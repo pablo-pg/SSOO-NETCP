@@ -38,7 +38,7 @@ std::cout << "close (fd): " << fd_ << std::endl;
 }
 
 void Socket::send_to(const Message& message, const sockaddr_in& address) {
-  int result = sendto(fd_, &message, sizeof(message), 0,
+  int result = sendto(fd_, &message.data, sizeof(message), 0,
                       reinterpret_cast<const sockaddr*>(&address),
                       sizeof(address));
   if (result < 0) {
@@ -62,19 +62,20 @@ void Socket::send_to(const FileMetadata& metadata, const sockaddr_in& address) {
   }
 }
 
-Message Socket::receive_from(const sockaddr_in& address) {
-  Message message;
+void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
+                          const int& size) {
+  // Message message;
   std::cout << "Esperando mensaje..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
-  int result = recvfrom(fd_, &message, sizeof(message), 0,
+  int result = recvfrom(fd_, mem_zone, size, 0,
                       reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo recibir el mensaje");
   } else {
     std::cout << "Mensaje recibido" << std::endl;
-    return message;
+    // return message;
   }
 }
 

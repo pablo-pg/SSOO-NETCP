@@ -40,6 +40,7 @@ File::File(const std::string& file_name, const struct stat& metadata) {
   file_info_ = metadata;
   data_.resize(file_size_);
   int trunc = ftruncate(file_fd_, metadata.st_size);
+  unmap_region_ = map<uint8_t>(PROT_WRITE, file_size_);
   if (trunc < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se puede establecer el tamaño del archivo");
@@ -57,14 +58,14 @@ data_.shrink_to_fit();
 
 template<typename T> std::unique_ptr<T, std::function<void(T*)>>
 File::map(int prot, size_t num, off_t offset) {
-  num = 1;
-  offset = 0;
+  // std::cout << "Valor de num: " << num * sizeof(T)<< std::endl << "Valor de offset" << offset << std::endl;
   mapped_mem_ = mmap(nullptr, num * sizeof(T), prot, MAP_SHARED, file_fd_,
                           offset);
   if (mapped_mem_ == MAP_FAILED) {
     throw std::system_error(errno, std::system_category(), "Fallo en mmap()");
   }
   auto mmap_deleter = [num](T* addr) {
+  std::cout << "deleting map" << std::endl;
     munmap(
       addr,               // Puntero a la región a liberar (devuelto por mmap())
     num * sizeof(T));     // Tamaño de la porción a liberar. La Liberamos toda.

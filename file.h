@@ -35,6 +35,7 @@ class File {
   std::string GetData() const {return data_;}
   struct stat GetMetaInfo() const {return file_info_;}
   void* GetMappedMem() const {return mapped_mem_;}
+  int GetFileSize() const {return file_size_;}
   void SetData(const std::string& text);
 
  private:
@@ -47,6 +48,7 @@ class File {
   struct stat file_info_;
   std::string data_;
   void* mapped_mem_;
+  std::unique_ptr<uint8_t, std::function<void(uint8_t*)>> unmap_region_;
 };
 
 #endif  // FILE_H_

@@ -27,8 +27,8 @@ struct FileMetadata {
   size_t file_size;
   int calculate_message_num(const size_t& size) {
     int num = 0;
-    num = size / 1024;
-    if ((size % 1024) != 0) {
+    num = size / MESSAGE_SIZE;
+    if ((size % MESSAGE_SIZE) != 0) {
       num++;
     }
     return num;

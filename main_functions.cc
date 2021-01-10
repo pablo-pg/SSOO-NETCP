@@ -59,7 +59,7 @@ int receive() {
     try {
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
-    Message m_recibido;
+    // Message m_recibido;
     sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
     metadata = local.receive_metadata(address_to_receive);
     // Chivatos del metadata
@@ -68,14 +68,23 @@ int receive() {
               << "\nTamaño: " << metadata.file_size << std::endl;
     std::string string_filename(metadata.filename.data());
     // El archivo donde se guardará el mensaje recibido
-    File file_to_receive("elpepe.txt", metadata.file_info);
+    File file("salida.txt", metadata.file_info);
     std::string total_text;   //< Todo el contenido de todos los mensajes juntos
-    for (int i {0}; i < metadata.packages_number; i++) {
-      m_recibido = local.receive_from(address_to_receive);
-      // std::cout << "\n\nPaquete:\n" << m_recibido.data.data() << std::endl;
-      total_text += m_recibido.data.data();
+    for (int i {0}; i < metadata.packages_number - 1; i++) {
+      // local.receive_from(address_to_receive, file.GetMappedMem(), file.GetFileSize());
+      local.receive_from(address_to_receive,
+                file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
     }
-    file_to_receive.SetData(total_text);
+    if (metadata.file_size % MESSAGE_SIZE != 0) {
+      local.receive_from(address_to_receive,
+            file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
+                          metadata.file_size % MESSAGE_SIZE);
+    } else {
+      local.receive_from(address_to_receive,
+            file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
+            MESSAGE_SIZE);
+    }
+    // file.SetData(total_text);
     std::cout << "Archivo completo:\n" << total_text << std::endl;
   }
   catch(std::bad_alloc& e) {
@@ -83,7 +92,7 @@ int receive() {
     return 1;
   }
   catch(std::system_error& e) {
-    std::cerr << "netcp" << ": " << e.what() << '\n';
+    std::cerr << "netcp" << ": " << e.code() << '\n';
     return 2;
   }
   catch (...) {
@@ -137,23 +146,23 @@ Message SetInfo(const std::string& text, const int& package) {
   Message message;
   // Primer paquete
   if (package == 0) {
-    for (int i {0}; i < MESSAGE_SIZE - 1; i++) {
+    for (int i {0}; i < MESSAGE_SIZE ; i++) {
       if ((size_t)i < text.size()) {
         message.data.at(i) = text.at(i);
       } else {
-        message.data.at(i) = '\0';
+        // message.data.at(i) = '\0';
       }
     }
   } else {
   // Demás paquetes
-    for (int i {0}; i < MESSAGE_SIZE - 1; i++) {
+    for (int i {0}; i < MESSAGE_SIZE; i++) {
       if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
-        message.data.at(i) = text.at(i + (MESSAGE_SIZE * package) - 1);
+        message.data.at(i) = text.at(i + (MESSAGE_SIZE * package));
       } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
         message.data.at(i) = '\0';
       }
     }
   }
-  message.data.at(MESSAGE_SIZE - 1) = '\0';
+  // message.data.at(MESSAGE_SIZE - 1) = '\0';
   return message;
 }
