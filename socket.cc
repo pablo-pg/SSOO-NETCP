@@ -65,7 +65,6 @@ void Socket::send_to(const FileMetadata& metadata, const sockaddr_in& address) {
 
 void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
                           const int& size) {
-  // Message message;
   std::cout << "Esperando mensaje..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
@@ -76,7 +75,6 @@ void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
                             "no se pudo recibir el mensaje");
   } else {
     std::cout << "Mensaje recibido" << std::endl;
-    // return message;
   }
 }
 

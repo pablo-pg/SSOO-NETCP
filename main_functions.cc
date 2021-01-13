@@ -26,13 +26,11 @@ int send(const char* argv) {
     filename = argv;
     File file(filename);
     FileMetadata metadata;
-    // Message message_size;
     metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo());
     sockaddr_in address_to_send = make_ip_address(2000, "127.0.0.1");
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
-      // message_size = SetInfo(file.GetData(), package);
       remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
     }
@@ -138,29 +136,3 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
   metadata.file_info = meta_info;
   return metadata;
 }
-
-
-// Message SetInfo(const std::string& text, const int& package) {
-//   Message message;
-//   // Primer paquete
-//   if (package == 0) {
-//     for (int i {0}; i < MESSAGE_SIZE ; i++) {
-//       if ((size_t)i < text.size()) {
-//         message.data.at(i) = text.at(i);
-//       } else {
-//         // message.data.at(i) = '\0';
-//       }
-//     }
-//   } else {
-//   // Demás paquetes
-//     for (int i {0}; i < MESSAGE_SIZE; i++) {
-//       if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
-//         message.data.at(i) = text.at(i + (MESSAGE_SIZE * package));
-//       } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
-//         message.data.at(i) = '\0';
-//       }
-//     }
-//   }
-//   // message.data.at(MESSAGE_SIZE - 1) = '\0';
-//   return message;
-// }

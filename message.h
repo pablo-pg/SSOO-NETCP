@@ -36,14 +36,4 @@ struct FileMetadata {
   int packages_number = calculate_message_num(file_size);
 };
 
-
-
-// struct Message {
-//   std::array<char, MESSAGE_SIZE> data;
-//   Message& operator=(const Message rhs) {
-//     data = rhs.data;
-//     return *this;
-//   }
-// };
-
 #endif  // MESSAGE_H_

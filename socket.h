@@ -30,9 +30,11 @@ class Socket {
   explicit Socket(const sockaddr_in& address);
   ~Socket();
 
-  void send_to(const void* message, const sockaddr_in& address, const int& size);
+  void send_to(const void* message, const sockaddr_in& address,
+               const int& size);
   void send_to(const FileMetadata& metadata, const sockaddr_in& address);
-  void receive_from(const sockaddr_in& address, void* mem_zone, const int& size);
+  void receive_from(const sockaddr_in& address, void* mem_zone,
+                    const int& size);
   FileMetadata receive_metadata(const sockaddr_in& address);
 
   sockaddr_in get_address() const {return address_;}

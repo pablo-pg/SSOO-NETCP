@@ -35,7 +35,6 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 
 FileMetadata SetMetadata(const std::string& text, const std::string& filename,
                           const struct stat& meta_info);
-// Message SetInfo(const std::string& text, const int& package);
 
 
 #endif  // MAIN_FUNCTIONS_H_
