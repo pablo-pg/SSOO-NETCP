@@ -36,7 +36,7 @@ class File {
   struct stat GetMetaInfo() const {return file_info_;}
   void* GetMappedMem() const {return mapped_mem_;}
   int GetFileSize() const {return file_size_;}
-  void SetData(const std::string& text);
+//   void SetData(const std::string& text);
 
  private:
   void Read();  // Método que mapea en memoria

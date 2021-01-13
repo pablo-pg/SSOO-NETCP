@@ -38,13 +38,12 @@ struct FileMetadata {
 
 
 
-struct Message {
-  const size_t size = MESSAGE_SIZE;
-  std::array<char, MESSAGE_SIZE> data;
-  Message& operator=(const Message rhs) {
-    data = rhs.data;
-    return *this;
-  }
-};
+// struct Message {
+//   std::array<char, MESSAGE_SIZE> data;
+//   Message& operator=(const Message rhs) {
+//     data = rhs.data;
+//     return *this;
+//   }
+// };
 
 #endif  // MESSAGE_H_

@@ -13,7 +13,7 @@
 
 
 CC=g++
-CFLAGS=-O0 -g -Wall
+CFLAGS=-O0 -g -Wall -Wno-pointer-arith
 DEPS = socket.h
 OBJ = socket.o file.o netcp.o main_functions.o
 

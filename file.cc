@@ -18,6 +18,7 @@ File::File(const std::string& file_name) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo abrir el fichero");
   }
+  lockf(file_fd_, F_LOCK, 0);
   struct stat buf{};
   // Guardo en buf toda la info del archivo (size, permisos,...)
   fstat(file_fd_, &buf);
@@ -35,6 +36,7 @@ File::File(const std::string& file_name, const struct stat& metadata) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo abrir el fichero");
   }
+  lockf(file_fd_, F_LOCK, 0);
   // Guardo en buf toda la info del archivo (size, permisos,...)
   file_size_ = metadata.st_size;   // Guardo el tamaño del archivo
   file_info_ = metadata;
@@ -48,17 +50,17 @@ File::File(const std::string& file_name, const struct stat& metadata) {
 }
 
 File::~File() {
-close(file_fd_);
-file_name_.clear();
-data_.clear();
-data_.resize(0);
-data_.shrink_to_fit();
+  lockf(file_fd_, F_ULOCK, 0);
+  close(file_fd_);
+  file_name_.clear();
+  data_.clear();
+  data_.resize(0);
+  data_.shrink_to_fit();
 }
 
 
 template<typename T> std::unique_ptr<T, std::function<void(T*)>>
 File::map(int prot, size_t num, off_t offset) {
-  // std::cout << "Valor de num: " << num * sizeof(T)<< std::endl << "Valor de offset" << offset << std::endl;
   mapped_mem_ = mmap(nullptr, num * sizeof(T), prot, MAP_SHARED, file_fd_,
                           offset);
   if (mapped_mem_ == MAP_FAILED) {
@@ -93,14 +95,14 @@ void File::Read() {
 }
 
 
-void File::SetData(const std::string& text) {
-  data_ = text;
-  auto memory_region = map<uint8_t>(PROT_READ, file_size_);
-  const uint8_t* memory_region_begin = memory_region.get();
-  const uint8_t* memory_region_end = memory_region_begin + file_size_;
-  uint position = 0;
-  for (const uint8_t *p = memory_region_begin; p < memory_region_end; ++p) {
-    // *p = data_.at(position);
-    position++;
-  }
-}
+// void File::SetData(const std::string& text) {
+//   data_ = text;
+//   auto memory_region = map<uint8_t>(PROT_READ, file_size_);
+//   const uint8_t* memory_region_begin = memory_region.get();
+//   const uint8_t* memory_region_end = memory_region_begin + file_size_;
+//   uint position = 0;
+//   for (const uint8_t *p = memory_region_begin; p < memory_region_end; ++p) {
+//     // *p = data_.at(position);
+//     position++;
+//   }
+// }

@@ -26,15 +26,15 @@ int send(const char* argv) {
     filename = argv;
     File file(filename);
     FileMetadata metadata;
-    Message message;
+    // Message message_size;
     metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo());
     sockaddr_in address_to_send = make_ip_address(2000, "127.0.0.1");
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
-      message = SetInfo(file.GetData(), package);
+      // message_size = SetInfo(file.GetData(), package);
       remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
-                      address_to_send, sizeof(message));
+                      address_to_send, MESSAGE_SIZE);
     }
   }
   catch(std::bad_alloc& e) {
@@ -60,7 +60,6 @@ int receive() {
     try {
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
-    // Message m_recibido;
     sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
     metadata = local.receive_metadata(address_to_receive);
     // Chivatos del metadata
@@ -72,7 +71,6 @@ int receive() {
     File file("salida.txt", metadata.file_info);
     std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number - 1; i++) {
-      // local.receive_from(address_to_receive, file.GetMappedMem(), file.GetFileSize());
       local.receive_from(address_to_receive,
                 file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
     }
@@ -85,7 +83,6 @@ int receive() {
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
     }
-    // file.SetData(total_text);
     std::cout << "Archivo completo:\n" << total_text << std::endl;
   }
   catch(std::bad_alloc& e) {
@@ -143,27 +140,27 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
 }
 
 
-Message SetInfo(const std::string& text, const int& package) {
-  Message message;
-  // Primer paquete
-  if (package == 0) {
-    for (int i {0}; i < MESSAGE_SIZE ; i++) {
-      if ((size_t)i < text.size()) {
-        message.data.at(i) = text.at(i);
-      } else {
-        // message.data.at(i) = '\0';
-      }
-    }
-  } else {
-  // Demás paquetes
-    for (int i {0}; i < MESSAGE_SIZE; i++) {
-      if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
-        message.data.at(i) = text.at(i + (MESSAGE_SIZE * package));
-      } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
-        message.data.at(i) = '\0';
-      }
-    }
-  }
-  // message.data.at(MESSAGE_SIZE - 1) = '\0';
-  return message;
-}
+// Message SetInfo(const std::string& text, const int& package) {
+//   Message message;
+//   // Primer paquete
+//   if (package == 0) {
+//     for (int i {0}; i < MESSAGE_SIZE ; i++) {
+//       if ((size_t)i < text.size()) {
+//         message.data.at(i) = text.at(i);
+//       } else {
+//         // message.data.at(i) = '\0';
+//       }
+//     }
+//   } else {
+//   // Demás paquetes
+//     for (int i {0}; i < MESSAGE_SIZE; i++) {
+//       if ((size_t)(i + MESSAGE_SIZE * package) < text.size()) {
+//         message.data.at(i) = text.at(i + (MESSAGE_SIZE * package));
+//       } else if ((size_t)(i + MESSAGE_SIZE * package) == text.size()) {
+//         message.data.at(i) = '\0';
+//       }
+//     }
+//   }
+//   // message.data.at(MESSAGE_SIZE - 1) = '\0';
+//   return message;
+// }

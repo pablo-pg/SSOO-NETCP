@@ -37,7 +37,8 @@ Socket::~Socket() {
 std::cout << "close (fd): " << fd_ << std::endl;
 }
 
-void Socket::send_to(const void* message, const sockaddr_in& address, const int& size) {
+void Socket::send_to(const void* message, const sockaddr_in& address,
+                     const int& size) {
   int result = sendto(fd_, message, size, 0,
                       reinterpret_cast<const sockaddr*>(&address),
                       sizeof(address));
@@ -45,7 +46,7 @@ void Socket::send_to(const void* message, const sockaddr_in& address, const int&
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
   } else {
-    // std::cout << "Paquete enviado:\n" << message.data. << std::endl;
+    std::cout << "Paquete enviado." << std::endl;
   }
 }
 
