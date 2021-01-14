@@ -33,9 +33,10 @@ void help() {
 }
 
 
-int send_file(std::string argv) {
+int send_file(std::string argv, std::atomic<bool>& quit_tarea2) {
   try {
-    while (quit_tarea3) {
+    while (quit_tarea2) {
+      return 0;
       std::this_thread::yield();
     }
     std::string filename;
@@ -47,8 +48,10 @@ int send_file(std::string argv) {
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
+      if (!quit_tarea2) {
       remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
+      }
     }
 std::cout << "TEST" << std::endl;
   }
@@ -70,7 +73,7 @@ std::cout << "TEST" << std::endl;
   return 0;
 }
 
-int receive() {
+int receive(std::atomic<bool>& quit_tarea3) {
     try {
       while (quit_tarea3) {
         std::this_thread::yield();

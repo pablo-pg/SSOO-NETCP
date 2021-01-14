@@ -28,11 +28,11 @@
 #include "./message.h"
 #include "./socket.h"
 
-extern std::atomic<bool> quit_tarea2, quit_tarea3;
+// extern std::atomic<bool> quit_tarea2, quit_tarea3, pause_send;
 
 void help();
-int send_file(std::string argv);
-int receive();
+int send_file(std::string argv, std::atomic<bool>& quit_tarea2);
+int receive(std::atomic<bool>& quit_tarea3);
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());

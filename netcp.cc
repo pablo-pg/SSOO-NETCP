@@ -26,7 +26,7 @@
 #include "./file.h"
 #include "./main_functions.h"
 
-std::atomic<bool> quit_tarea2(false), quit_tarea3(false);
+std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false);
 
 int protected_main(const int& argc, char* argv[]);
 
@@ -98,6 +98,7 @@ int tarea1() {
     }
     std::thread tarea2, tarea3;
     /// LOS COMANDOS
+    /// No funcionan los hilos
     if (command == receive_text) {
       std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
       int fail = mkdir(second_word.c_str(), 0777);
@@ -107,10 +108,10 @@ int tarea1() {
       } else {
         std::cout << "Carpeta creada." << std::endl;
       }
-      std::thread tarea3(receive);
+      tarea3 = std::thread(receive, std::ref(quit_tarea2));
       std::cout << "Archivo recibido." << std::endl;
     } else if (command == send_text) {
-      std::thread tarea2(send_file, second_word);
+      tarea2 = std::thread(send_file, second_word, std::ref(quit_tarea2));
       std::cout << "Archivo enviado." << std::endl;
     } else if (command == abort_text) {
       tarea2.join();
@@ -119,11 +120,14 @@ int tarea1() {
       tarea3.join();
       quit_tarea3 = true;
     } else if (command == pause_text) {
+      pause_send = true;
     } else if (command == resume_text) {
+      pause_send = false;
     } else if (command == help_text) {
       std::thread help_thread(help);
       help_thread.join();
     }
+std::cout << "TEST2" << std::endl; 
     // tarea2.join();
     // tarea3.join();
   }
