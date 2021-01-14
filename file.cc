@@ -67,7 +67,7 @@ File::map(int prot, size_t num, off_t offset) {
     throw std::system_error(errno, std::system_category(), "Fallo en mmap()");
   }
   auto mmap_deleter = [num](T* addr) {
-  std::cout << "deleting map" << std::endl;
+  // std::cout << "deleting map" << std::endl;
     munmap(
       addr,               // Puntero a la región a liberar (devuelto por mmap())
     num * sizeof(T));     // Tamaño de la porción a liberar. La Liberamos toda.

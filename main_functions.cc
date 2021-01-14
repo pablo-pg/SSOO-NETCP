@@ -14,14 +14,30 @@
 
 void help() {
   std::cout << "Práctica de Sistemas Operativos. Netcp\nEste programa envía y"
-            << " recibe ficheros.\n\nPara enviar use:\t./netcp send FICHERO\n"
-            << "Para recibir use:\t./netcp receive" << std::endl;
-  exit(0);
+            << " recibe ficheros.\n\nAl ejecutar el programa se abrirá una "
+            << "consola especial. Ahhí introducirá los comandos que deseen"
+            << "realizarse. Comandos:\n\n\n·Receive [directorio]:​ activar el "
+            << " modo de recepción. Con en el modo de recepción activado, el "
+            << "programa puede recibir archivos de otro Netcp y guardarlos en ​"
+            << "‘directorio’​, que debe ser creado si no existe. Cada vez que "
+            << "un archivo termine de recibirse, se indicará que la descarga "
+            << "ha finalizado y su ruta, mostrando un mensaje en la salida "
+            << "estándar.\n·Send [nombre_archivo]​: iniciará el envío del "
+            << "archivo indicado. Cuando el archivo termine deenviarse, se "
+            << "indicará con un mensaje en la salida estándar.\n·Abort​: "
+            << "abortará el envío. Si el comando es ​Abort receive​, se "
+            << "desactiva el modo de recepción.\n·Pause:, pausará el envío.\n"
+            << "·Resume​: continuará el envío.\n·Quit:​ termina la ejecución "
+            << "del proceso de forma ordenada, cerrando los archivos, sockets y"
+            << " el resto de recursos utilizados." << std::endl;
 }
 
 
-int send(const char* argv) {
+int send_file(std::string argv) {
   try {
+    while (quit_tarea3) {
+      std::this_thread::yield();
+    }
     std::string filename;
     filename = argv;
     File file(filename);
@@ -34,6 +50,7 @@ int send(const char* argv) {
       remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
     }
+std::cout << "TEST" << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -53,20 +70,22 @@ int send(const char* argv) {
   return 0;
 }
 
-
 int receive() {
     try {
+      while (quit_tarea3) {
+        std::this_thread::yield();
+      }
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
     sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
     metadata = local.receive_metadata(address_to_receive);
     // Chivatos del metadata
-    std::cout << "Datos de:" << metadata.filename.data()
-              << "\nSeparado en: " << metadata.packages_number
-              << "\nTamaño: " << metadata.file_size << std::endl;
+    // std::cout << "Datos de:" << metadata.filename.data()
+    //           << "\nSeparado en: " << metadata.packages_number
+    //           << "\nTamaño: " << metadata.file_size << std::endl;
     std::string string_filename(metadata.filename.data());
     // El archivo donde se guardará el mensaje recibido
-    File file("salida.txt", metadata.file_info);
+    File file("salida.txt", metadata.file_info);      //< cambiar fichero por metadata.filename
     std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number - 1; i++) {
       local.receive_from(address_to_receive,
@@ -81,7 +100,7 @@ int receive() {
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
     }
-    std::cout << "Archivo completo:\n" << total_text << std::endl;
+    // std::cout << "Archivo completo:\n" << total_text << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -111,11 +130,11 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
   } else {
     inet_aton(ip_address.c_str(), &direction.sin_addr);
   }
-std::cout << std::endl;
-std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
-          << std::endl;
-std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
-          << ")" << std::endl << std::endl;
+// std::cout << std::endl;
+// std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
+//           << std::endl;
+// std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
+//           << ")" << std::endl << std::endl;
   if (port > 65525 || port < 1) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);

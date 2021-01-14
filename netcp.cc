@@ -9,20 +9,26 @@
  * 
  */
 
-#include <sys/socket.h>
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <system_error>
-#include <iostream>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <atomic>
 #include <cstring>
+#include <iostream>
+#include <string>
+#include <system_error>
+#include <thread>
 
 #include "./socket.h"
 #include "./message.h"
 #include "./file.h"
 #include "./main_functions.h"
 
+std::atomic<bool> quit_tarea2(false), quit_tarea3(false);
+
+int protected_main(const int& argc, char* argv[]);
 
 // MAIN
 int main(int argc, char* argv[]) {
@@ -31,36 +37,95 @@ int main(int argc, char* argv[]) {
   std::string receive_text = "receive";
   std::string send_text = "send";
   try {
-    if (argc == 1) {
-      throw std::invalid_argument("No se ha indicado ninguna operación.\n"
-                                  "Use el parámetro \"-h\" para leer ayuda.");
-    }
-    if (argc == 2) {
-      if (argv[1] == help_text || argv[1] == help_text2) {
-        help();
-      } else if (argv[1] == receive_text) {
-        receive();
-      } else if (argv[1] == send_text) {
-        throw std::invalid_argument("No ha indicado ningún archivo que enviar."
-                                    "\n");
-      } else {
-        throw std::invalid_argument("La operación indicada no es válida.\n"
-                                  "Use el parámetro \"-h\" para leer ayuda.");
-      }
-    } else if (argc == 3) {
-      if (argv[1] == send_text) {
-        send(argv[2]);
-      } else {
-        throw std::invalid_argument("La operación indicada no es válida.\n"
-                                  "Use el parámetro \"-h\" para leer ayuda.");
-      }
-    } else {
-      throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
-                            "Este programa solo permite enviar un fichero.\n"
-                            "Use el parámetro \"-h\" para leer ayuda.");
-    }
+    protected_main(argc, argv);
   }
   catch(std::invalid_argument& e) {
     std::cerr << "netcp: " << e.what() << std::endl;
+    return 3;
   }
+}
+
+int tarea1();
+
+int protected_main(const int& argc, char* argv[]) {
+  std::string help_text = "--help", help_text2 = "-h";
+  if (argc == 1) {
+    std::thread tarea1_thread(tarea1);
+    tarea1_thread.join();
+  } else if (argc == 2) {
+    if (argv[1] == help_text || argv[1] == help_text2) {
+      help();
+    }
+  } else {
+    throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
+                          "Este programa no requiere argumentos.\n"
+                          "Use el parámetro \"-h\" para leer ayuda.");
+  }
+  return 0;
+}
+
+
+int tarea1() {
+  std::string command;
+  std::string receive_text = "receive";
+  std::string send_text = "send";
+  std::string abort_receive = "abort receive";
+  std::string abort_text = "abort";
+  std::string pause_text = "pause";
+  std::string resume_text = "resume";
+  std::string quit_text = "quit";
+  std::string help_text = "help";
+  std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
+            << "comandos se pueden añadir, puede usar el comando \"help\" y se"
+            << "los mostrará." << std::endl;
+  while (command != quit_text) {
+    std::string second_word, first_world;
+    std::cout << ">>  ";
+    std::getline(std::cin, command);
+    size_t space_pos = command.find(' ');
+    if (space_pos != std::string::npos) {
+      for (size_t pos = space_pos; pos < command.size(); ++pos) {
+        if (command[pos] != ' ') {
+          second_word += command[pos];
+        }
+      }
+      for (size_t pos {0}; pos < space_pos; ++pos) {
+        if (command[pos] != ' ') {
+          first_world += command[pos];
+        }
+      }
+      command = first_world;
+    }
+    std::thread tarea2, tarea3;
+    /// LOS COMANDOS
+    if (command == receive_text) {
+      std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
+      int fail = mkdir(second_word.c_str(), 0777);
+      if (fail == -1) {
+        std::cerr << "Netcp: No se pudo crear la carpeta: "
+                  << std::strerror(errno) << "(" << errno << ")" << std::endl;
+      } else {
+        std::cout << "Carpeta creada." << std::endl;
+      }
+      std::thread tarea3(receive);
+      std::cout << "Archivo recibido." << std::endl;
+    } else if (command == send_text) {
+      std::thread tarea2(send_file, second_word);
+      std::cout << "Archivo enviado." << std::endl;
+    } else if (command == abort_text) {
+      tarea2.join();
+      quit_tarea2 = true;
+    } else if (command == abort_receive) {
+      tarea3.join();
+      quit_tarea3 = true;
+    } else if (command == pause_text) {
+    } else if (command == resume_text) {
+    } else if (command == help_text) {
+      std::thread help_thread(help);
+      help_thread.join();
+    }
+    // tarea2.join();
+    // tarea3.join();
+  }
+  return 0;
 }

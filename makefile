@@ -14,7 +14,8 @@
 
 CC=g++
 CFLAGS=-O0 -g -Wall -Wno-pointer-arith
-DEPS = socket.h
+DEPS = socket.h message.h file.h main_functions.h
+LIBS = -pthread
 OBJ = socket.o file.o netcp.o main_functions.o
 
 %.o: %.cc $(DEPS)
@@ -22,7 +23,7 @@ OBJ = socket.o file.o netcp.o main_functions.o
 
 
 netcp: $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 
 run: clean netcp

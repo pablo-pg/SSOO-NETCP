@@ -19,7 +19,7 @@ Socket::Socket(const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo crear el socket");
   } else {
-    std::cout << "(flag) socket num: " << fd_ << std::endl;
+    // std::cout << "(flag) socket num: " << fd_ << std::endl;
   }
   // Se asigna la dirección al socket
   int result = bind(fd_, reinterpret_cast<const sockaddr*>(&address),
@@ -28,13 +28,13 @@ Socket::Socket(const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "falló bind");
   } else {
-    std::cout << "(flag) bind error: " << result << std::endl;
+    // std::cout << "(flag) bind error: " << result << std::endl;
   }
 }
 
 Socket::~Socket() {
   close(fd_);
-std::cout << "close (fd): " << fd_ << std::endl;
+// std::cout << "close (fd): " << fd_ << std::endl;
 }
 
 void Socket::send_to(const void* message, const sockaddr_in& address,
@@ -46,7 +46,7 @@ void Socket::send_to(const void* message, const sockaddr_in& address,
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
   } else {
-    std::cout << "Paquete enviado." << std::endl;
+    // std::cout << "Paquete enviado." << std::endl;
   }
 }
 
@@ -58,14 +58,14 @@ void Socket::send_to(const FileMetadata& metadata, const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar los datos del archivo");
   } else {
-    std::cout << "Datos enviado del archivo:\"" << metadata.filename.data()
-              << "\"" << std::endl;
+    // std::cout << "Datos enviado del archivo:\"" << metadata.filename.data()
+    //           << "\"" << std::endl;
   }
 }
 
 void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
                           const int& size) {
-  std::cout << "Esperando mensaje..." << std::endl;
+  // std::cout << "Esperando mensaje..." << std::endl;
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
   int result = recvfrom(fd_, mem_zone, size, 0,
@@ -89,7 +89,7 @@ FileMetadata Socket::receive_metadata(const sockaddr_in& address) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudieron recibir los datos");
   } else {
-    std::cout << "Datos recibidos" << std::endl;
+    // std::cout << "Datos recibidos" << std::endl;
     return metadata;
   }
 }

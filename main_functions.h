@@ -8,26 +8,30 @@
  * @copyright Copyright (c) 2021
  * 
  */
+
 #ifndef MAIN_FUNCTIONS_H_
 #define MAIN_FUNCTIONS_H_
 
-#include <sys/socket.h>
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <system_error>
-#include <iostream>
+#include <atomic>
 #include <cstring>
+#include <iostream>
 #include <string>
+#include <thread>
 
-#include "./socket.h"
-#include "./message.h"
 #include "./file.h"
+#include "./message.h"
+#include "./socket.h"
 
+extern std::atomic<bool> quit_tarea2, quit_tarea3;
 
 void help();
-int send(const char* argv);
+int send_file(std::string argv);
 int receive();
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
