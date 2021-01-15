@@ -69,7 +69,6 @@ int tarea1() {
   std::string command;
   std::string receive_text = "receive";
   std::string send_text = "send";
-  std::string abort_receive = "abort receive";
   std::string abort_text = "abort";
   std::string pause_text = "pause";
   std::string resume_text = "resume";
@@ -78,6 +77,7 @@ int tarea1() {
   std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << "los mostrará." << std::endl;
+  std::thread tarea2, tarea3;
   while (command != quit_text) {
     std::string second_word, first_world;
     std::cout << ">>  ";
@@ -96,7 +96,6 @@ int tarea1() {
       }
       command = first_world;
     }
-    std::thread tarea2, tarea3;
     /// LOS COMANDOS
     /// No funcionan los hilos
     if (command == receive_text) {
@@ -109,16 +108,18 @@ int tarea1() {
         std::cout << "Carpeta creada." << std::endl;
       }
       tarea3 = std::thread(receive, std::ref(quit_tarea2));
-      std::cout << "Archivo recibido." << std::endl;
     } else if (command == send_text) {
-      tarea2 = std::thread(send_file, second_word, std::ref(quit_tarea2));
+      tarea2 = std::thread(send_file, second_word, std::ref(quit_tarea2),
+                            std::ref(pause_send));
       std::cout << "Archivo enviado." << std::endl;
     } else if (command == abort_text) {
-      tarea2.join();
-      quit_tarea2 = true;
-    } else if (command == abort_receive) {
-      tarea3.join();
-      quit_tarea3 = true;
+      if (second_word == receive_text) {
+        tarea3.join();
+        quit_tarea3 = true;
+      } else {
+        tarea2.join();
+        quit_tarea2 = true;
+      }
     } else if (command == pause_text) {
       pause_send = true;
     } else if (command == resume_text) {
@@ -126,10 +127,12 @@ int tarea1() {
     } else if (command == help_text) {
       std::thread help_thread(help);
       help_thread.join();
+    } else if (command == quit_text) {
+      quit_tarea2 = true;
+      quit_tarea3 = true;
+      tarea2.join();
+      tarea3.join();
     }
-std::cout << "TEST2" << std::endl; 
-    // tarea2.join();
-    // tarea3.join();
   }
   return 0;
 }

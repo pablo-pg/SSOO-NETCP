@@ -15,28 +15,31 @@
 void help() {
   std::cout << "Práctica de Sistemas Operativos. Netcp\nEste programa envía y"
             << " recibe ficheros.\n\nAl ejecutar el programa se abrirá una "
-            << "consola especial. Ahhí introducirá los comandos que deseen"
-            << "realizarse. Comandos:\n\n\n·Receive [directorio]:​ activar el "
+            << "consola especial. Ahí introducirá los comandos que deseen "
+            << "realizarse. Comandos:\n\n\n· receive [directorio]:​ activar el "
             << " modo de recepción. Con en el modo de recepción activado, el "
             << "programa puede recibir archivos de otro Netcp y guardarlos en ​"
             << "‘directorio’​, que debe ser creado si no existe. Cada vez que "
             << "un archivo termine de recibirse, se indicará que la descarga "
             << "ha finalizado y su ruta, mostrando un mensaje en la salida "
-            << "estándar.\n·Send [nombre_archivo]​: iniciará el envío del "
+            << "estándar.\n· send [nombre_archivo]​: iniciará el envío del "
             << "archivo indicado. Cuando el archivo termine deenviarse, se "
-            << "indicará con un mensaje en la salida estándar.\n·Abort​: "
-            << "abortará el envío. Si el comando es ​Abort receive​, se "
-            << "desactiva el modo de recepción.\n·Pause:, pausará el envío.\n"
-            << "·Resume​: continuará el envío.\n·Quit:​ termina la ejecución "
+            << "indicará con un mensaje en la salida estándar.\n· abort​: "
+            << "abortará el envío. Si el comando es abort receive​, se "
+            << "desactiva el modo de recepción.\n· pause:, pausará el envío.\n"
+            << "· resume​: continuará el envío.\n· quit:​ termina la ejecución "
             << "del proceso de forma ordenada, cerrando los archivos, sockets y"
             << " el resto de recursos utilizados." << std::endl;
 }
 
 
-int send_file(std::string argv, std::atomic<bool>& quit_tarea2) {
+int send_file(std::string argv, std::atomic<bool>& quit_tarea2,
+              std::atomic<bool>& pause_send) {
   try {
     while (quit_tarea2) {
       return 0;
+    }
+    while (pause_send) {
       std::this_thread::yield();
     }
     std::string filename;
@@ -53,7 +56,7 @@ int send_file(std::string argv, std::atomic<bool>& quit_tarea2) {
                       address_to_send, MESSAGE_SIZE);
       }
     }
-std::cout << "TEST" << std::endl;
+    std::cout << "Archivo recibido." << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
@@ -103,7 +106,7 @@ int receive(std::atomic<bool>& quit_tarea3) {
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
     }
-    // std::cout << "Archivo completo:\n" << total_text << std::endl;
+    std::cout << "Archivo recibido." << std::endl;
   }
   catch(std::bad_alloc& e) {
     std::cerr << "netcp" << ": memoria insuficiente\n";
