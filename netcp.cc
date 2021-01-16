@@ -32,12 +32,16 @@ int protected_main(const int& argc, char* argv[]);
 
 // MAIN
 int main(int argc, char* argv[]) {
-  std::string help_text = "--help";
-  std::string help_text2 = "-h";
-  std::string receive_text = "receive";
-  std::string send_text = "send";
   try {
     protected_main(argc, argv);
+  }
+    catch(std::bad_alloc& e) {
+    std::cerr << "netcp" << ": memoria insuficiente\n";
+    return 1;
+  }
+  catch(std::system_error& e) {
+    std::cerr << "netcp" << ": " << e.what() << '\n';
+    return 2;
   }
   catch(std::invalid_argument& e) {
     std::cerr << "netcp: " << e.what() << std::endl;
@@ -48,18 +52,32 @@ int main(int argc, char* argv[]) {
 int tarea1();
 
 int protected_main(const int& argc, char* argv[]) {
-  std::string help_text = "--help", help_text2 = "-h";
-  if (argc == 1) {
-    std::thread tarea1_thread(tarea1);
-    tarea1_thread.join();
-  } else if (argc == 2) {
-    if (argv[1] == help_text || argv[1] == help_text2) {
-      help();
+  try {
+    std::string help_text = "--help", help_text2 = "-h";
+    if (argc == 1) {
+      std::thread tarea1_thread(tarea1);
+      tarea1_thread.join();
+    } else if (argc == 2) {
+      if (argv[1] == help_text || argv[1] == help_text2) {
+        help();
+      }
+    } else {
+      throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
+                            "Este programa no requiere argumentos.\n"
+                            "Use el parámetro \"-h\" para leer ayuda.");
     }
-  } else {
-    throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
-                          "Este programa no requiere argumentos.\n"
-                          "Use el parámetro \"-h\" para leer ayuda.");
+  }
+  catch(std::bad_alloc& e) {
+    std::cerr << "netcp" << ": memoria insuficiente\n";
+    return 1;
+  }
+  catch(std::system_error& e) {
+    std::cerr << "netcp" << ": " << e.what() << '\n';
+    return 2;
+  }
+  catch(std::invalid_argument& e) {
+    std::cerr << "netcp: " << e.what() << std::endl;
+    return 3;
   }
   return 0;
 }
@@ -78,6 +96,7 @@ int tarea1() {
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << "los mostrará." << std::endl;
   std::thread tarea2, tarea3;
+  std::exception_ptr eptr {};
   while (command != quit_text) {
     std::string second_word, first_world;
     std::cout << ">>  ";
@@ -97,8 +116,7 @@ int tarea1() {
       command = first_world;
     }
     /// LOS COMANDOS
-    /// No funcionan los hilos
-    if (command == receive_text) {
+    if (command == receive_text) {        //< RECIBIR
       std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
       int fail = mkdir(second_word.c_str(), 0777);
       if (fail == -1) {
@@ -107,31 +125,37 @@ int tarea1() {
       } else {
         std::cout << "Carpeta creada." << std::endl;
       }
-      tarea3 = std::thread(receive, std::ref(quit_tarea2));
-    } else if (command == send_text) {
-      tarea2 = std::thread(send_file, second_word, std::ref(quit_tarea2),
-                            std::ref(pause_send));
-      std::cout << "Archivo enviado." << std::endl;
+      tarea3 = std::thread(receive, std::ref(eptr), std::ref(quit_tarea2));
+    } else if (command == send_text) {    //< ENVIAR
+      tarea2 = std::thread(send_file, std::ref(eptr), second_word,
+                           std::ref(quit_tarea2), std::ref(pause_send));
     } else if (command == abort_text) {
-      if (second_word == receive_text) {
-        tarea3.join();
+      if (second_word == receive_text) {  //< ABORT RECIBIR
         quit_tarea3 = true;
-      } else {
-        tarea2.join();
+        // tarea3.join();
+      } else {                            //< ABORT ENVIAR
         quit_tarea2 = true;
+        std::cout << "Recepción abortada." << std::endl;
+        // tarea2.join();
       }
-    } else if (command == pause_text) {
+    } else if (command == pause_text) {   //< PAUSAR ENVIAR
       pause_send = true;
-    } else if (command == resume_text) {
+      std::cout << "Envío pausado." << std::endl;
+    } else if (command == resume_text) {  //< REANUDAR ENVIAR
       pause_send = false;
-    } else if (command == help_text) {
+      std::cout << "Envío reanudado." << std::endl;
+    } else if (command == help_text) {    //< HELP
       std::thread help_thread(help);
       help_thread.join();
-    } else if (command == quit_text) {
+    } else if (command == quit_text) {    //< QUIT
       quit_tarea2 = true;
       quit_tarea3 = true;
       tarea2.join();
       tarea3.join();
+    }
+    if (eptr) {
+      std::cout << "EXCEPCION" << std ::endl;
+      std::rethrow_exception(eptr);
     }
   }
   return 0;

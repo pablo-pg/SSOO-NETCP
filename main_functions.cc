@@ -33,8 +33,8 @@ void help() {
 }
 
 
-int send_file(std::string argv, std::atomic<bool>& quit_tarea2,
-              std::atomic<bool>& pause_send) {
+int send_file(std::exception_ptr& eptr, std::string argv,
+              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send) {
   try {
     while (quit_tarea2) {
       return 0;
@@ -52,34 +52,31 @@ int send_file(std::string argv, std::atomic<bool>& quit_tarea2,
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
       if (!quit_tarea2) {
-      remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
+std::this_thread::sleep_for(std::chrono::seconds(5));
+        while (pause_send) {
+          std::this_thread::yield();
+        }
+        remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
+        std::cout << "Paquete enviado." << std::endl;
+      }  else {
+        std::cout << "Envío abortado" << std::endl;
+        return 0;
       }
     }
-    std::cout << "Archivo recibido." << std::endl;
-  }
-  catch(std::bad_alloc& e) {
-    std::cerr << "netcp" << ": memoria insuficiente\n";
-    return 1;
-  }
-  catch(std::system_error& e) {
-    std::cerr << "netcp" << ": " << e.what() << '\n';
-    return 2;
-  }
-  catch(std::invalid_argument& e) {
-    std::cerr << "netcp: " << "introduzca solo 1 archivo que copiar" << "\n";
+    std::cout << "Archivo enviado." << std::endl;
   }
   catch (...) {
-    std::cout << "Error desconocido\n";
-    return 99;
+    eptr = std::current_exception();
   }
   return 0;
 }
 
-int receive(std::atomic<bool>& quit_tarea3) {
+int receive(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
     try {
-      while (quit_tarea3) {
-        std::this_thread::yield();
+      if (quit_tarea3) {
+        std::cout << "Recepción de mensaje abortada" << std::endl;
+        return 0;
       }
     Socket local(make_ip_address(2000, "127.0.0.1"));
     FileMetadata metadata;
@@ -94,8 +91,13 @@ int receive(std::atomic<bool>& quit_tarea3) {
     File file("salida.txt", metadata.file_info);      //< cambiar fichero por metadata.filename
     std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number - 1; i++) {
-      local.receive_from(address_to_receive,
-                file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
+      if (quit_tarea3) {
+        std::cout << "Recepción de mensaje abortada" << std::endl;
+        return 0;
+      } else {
+        local.receive_from(address_to_receive,
+                  file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
+      }
     }
     if (metadata.file_size % MESSAGE_SIZE != 0) {
       local.receive_from(address_to_receive,
@@ -108,17 +110,8 @@ int receive(std::atomic<bool>& quit_tarea3) {
     }
     std::cout << "Archivo recibido." << std::endl;
   }
-  catch(std::bad_alloc& e) {
-    std::cerr << "netcp" << ": memoria insuficiente\n";
-    return 1;
-  }
-  catch(std::system_error& e) {
-    std::cerr << "netcp" << ": " << e.code() << '\n';
-    return 2;
-  }
   catch (...) {
-    std::cout << "Error desconocido\n";
-    return 99;
+    eptr = std::current_exception();
   }
   return 0;
 }
