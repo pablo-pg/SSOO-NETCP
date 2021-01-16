@@ -12,7 +12,7 @@
 #include "./main_functions.h"
 
 
-void help() {
+void help_function() {
   std::cout << "Práctica de Sistemas Operativos. Netcp\nEste programa envía y"
             << " recibe ficheros.\n\nAl ejecutar el programa se abrirá una "
             << "consola especial. Ahí introducirá los comandos que deseen "
@@ -52,7 +52,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
       if (!quit_tarea2) {
-std::this_thread::sleep_for(std::chrono::seconds(5));
+std::this_thread::sleep_for(std::chrono::seconds(2));
         while (pause_send) {
           std::this_thread::yield();
         }
@@ -64,15 +64,16 @@ std::this_thread::sleep_for(std::chrono::seconds(5));
         return 0;
       }
     }
-    std::cout << "Archivo enviado." << std::endl;
+    std::cout << "~ Archivo enviado. ~" << std::endl;
   }
-  catch (...) {
+  catch (const std::exception& e) {
     eptr = std::current_exception();
   }
+std::cout << "Salgo de send" << std::endl;
   return 0;
 }
 
-int receive(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
+int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
     try {
       if (quit_tarea3) {
         std::cout << "Recepción de mensaje abortada" << std::endl;
@@ -108,9 +109,9 @@ int receive(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
     }
-    std::cout << "Archivo recibido." << std::endl;
+    std::cout << "~ Archivo recibido. ~" << std::endl;
   }
-  catch (...) {
+  catch (const std::exception& e) {
     eptr = std::current_exception();
   }
   return 0;

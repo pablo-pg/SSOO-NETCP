@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -25,6 +26,7 @@
 #include "./message.h"
 #include "./file.h"
 #include "./main_functions.h"
+
 
 std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false);
 
@@ -59,7 +61,7 @@ int protected_main(const int& argc, char* argv[]) {
       tarea1_thread.join();
     } else if (argc == 2) {
       if (argv[1] == help_text || argv[1] == help_text2) {
-        help();
+        help_function();
       }
     } else {
       throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
@@ -84,24 +86,34 @@ int protected_main(const int& argc, char* argv[]) {
 
 
 int tarea1() {
+  enum all_commands {send, receive, pause, abort, resume, quit, help};
+  std::map<std::string, all_commands> registred_commands;
+  registred_commands["send"] = send;
+  registred_commands["receive"] = receive;
+  registred_commands["pause"] = pause;
+  registred_commands["abort"] = abort;
+  registred_commands["resume"] = resume;
+  registred_commands["quit"] = quit;
+  registred_commands["help"] = help;
   std::string command;
-  std::string receive_text = "receive";
-  std::string send_text = "send";
-  std::string abort_text = "abort";
-  std::string pause_text = "pause";
-  std::string resume_text = "resume";
-  std::string quit_text = "quit";
-  std::string help_text = "help";
+  // std::string receive_text = "receive";
+  // std::string send_text = "send";
+  // std::string abort_text = "abort";
+  // std::string pause_text = "pause";
+  // std::string resume_text = "resume";
+  // std::string quit_text = "quit";
+  // std::string help_text = "help";
   std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << "los mostrará." << std::endl;
   std::thread tarea2, tarea3;
   std::exception_ptr eptr {};
-  while (command != quit_text) {
+  while (command != "quit") {
     std::string second_word, first_world;
     std::cout << ">>  ";
     std::getline(std::cin, command);
     size_t space_pos = command.find(' ');
+    // ---> La lectura de comandos se puede mejorar
     if (space_pos != std::string::npos) {
       for (size_t pos = space_pos; pos < command.size(); ++pos) {
         if (command[pos] != ' ') {
@@ -115,44 +127,135 @@ int tarea1() {
       }
       command = first_world;
     }
+    // std::thread help_thread;
+    // std::string folder_path;
     /// LOS COMANDOS
-    if (command == receive_text) {        //< RECIBIR
-      std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
-      int fail = mkdir(second_word.c_str(), 0777);
-      if (fail == -1) {
-        std::cerr << "Netcp: No se pudo crear la carpeta: "
-                  << std::strerror(errno) << "(" << errno << ")" << std::endl;
-      } else {
-        std::cout << "Carpeta creada." << std::endl;
-      }
-      tarea3 = std::thread(receive, std::ref(eptr), std::ref(quit_tarea2));
-    } else if (command == send_text) {    //< ENVIAR
-      tarea2 = std::thread(send_file, std::ref(eptr), second_word,
+    switch (registred_commands[command]) {
+      case send:                            //< ENVIAR
+      {
+        tarea2 = std::thread(send_file, std::ref(eptr), second_word,
                            std::ref(quit_tarea2), std::ref(pause_send));
-    } else if (command == abort_text) {
-      if (second_word == receive_text) {  //< ABORT RECIBIR
-        quit_tarea3 = true;
-        // tarea3.join();
-      } else {                            //< ABORT ENVIAR
-        quit_tarea2 = true;
-        std::cout << "Recepción abortada." << std::endl;
-        // tarea2.join();
+        break;
       }
-    } else if (command == pause_text) {   //< PAUSAR ENVIAR
-      pause_send = true;
-      std::cout << "Envío pausado." << std::endl;
-    } else if (command == resume_text) {  //< REANUDAR ENVIAR
-      pause_send = false;
-      std::cout << "Envío reanudado." << std::endl;
-    } else if (command == help_text) {    //< HELP
-      std::thread help_thread(help);
-      help_thread.join();
-    } else if (command == quit_text) {    //< QUIT
-      quit_tarea2 = true;
-      quit_tarea3 = true;
-      tarea2.join();
-      tarea3.join();
+      case receive:                         //< RECIBIR
+      {
+        std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
+        int fail = mkdir(second_word.c_str(), 0777);
+        if (fail == -1) {
+          std::cerr << "Netcp: No se pudo crear la carpeta: "
+                    << std::strerror(errno) << "(" << errno << ")" << std::endl;
+        } else {
+          std::cout << "Carpeta creada." << std::endl;
+        }
+        // std::string folder_path = "./";
+        // std::string actual_folder = "./";
+        // folder_path.append(second_word);
+        // actual_folder.append(getcwd());
+        // std::cout << "entrando en la carpeta " << folder_path << std::endl;
+        // chdir(folder_path.c_str());
+        tarea3 = std::thread(receive_file, std::ref(eptr),
+                             std::ref(quit_tarea3));
+        break;
+      }
+      case pause:                           //< PAUSE
+      {
+        pause_send = true;
+        std::cout << "Envío pausado." << std::endl;
+        break;
+      }
+      case abort:
+      {
+        if (second_word == "receive") {     //< ABORT RECIBIR
+          if (tarea3.joinable()) {
+            quit_tarea3 = true;
+            std::cout << "Recepción abortada." << std::endl;
+            tarea3.join();
+          }
+        } else {                            //< ABORT ENVIAR
+          if (tarea3.joinable()) {
+            quit_tarea2 = true;
+            std::cout << "Envío abortado." << std::endl;
+            tarea2.join();
+          }
+        }
+        break;
+      }
+      case resume:                          //< RESUME
+      {
+        pause_send = false;
+        std::cout << "Envío reanudado." << std::endl;
+        break;
+      }
+      case quit:                            //< QUIT
+      {
+        quit_tarea2 = true;
+        quit_tarea3 = true;
+        if (tarea2.joinable()) {
+          tarea2.join();
+        }
+        if (tarea3.joinable()) {
+          tarea3.join();
+        }
+        break;
+      }
+      case help:                            //< HELP
+      {
+        std::thread help_thread(help_function);
+        help_thread.join();
+        break;
+      }
+      default:
+      {
+        std::cout << "Comando no válido, vuelva a intentarlo." << std::endl;
+      }
     }
+    // if (command == receive_text) {        //< RECIBIR
+      // ----> Creo, hay funciones que crean y verifican si existe un directorio
+      // std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
+      // int fail = mkdir(second_word.c_str(), 0777);
+      // if (fail == -1) {
+      //   std::cerr << "Netcp: No se pudo crear la carpeta: "
+      //             << std::strerror(errno) << "(" << errno << ")" << std::endl;
+      // } else {
+      //   std::cout << "Carpeta creada." << std::endl;
+      // }
+      // std::string path = second_word;
+      // tarea3 = std::thread(receive, std::ref(eptr), std::ref(quit_tarea3));
+    // } else if (command == send_text) {    //< ENVIAR
+    //   tarea2 = std::thread(send_file, std::ref(eptr), second_word,
+    //                        std::ref(quit_tarea2), std::ref(pause_send));
+    // } else if (command == abort_text) {
+      // if (second_word == receive_text) {  //< ABORT RECIBIR
+      //   if (tarea3.joinable()) {
+      //     quit_tarea3 = true;
+      //     std::cout << "Recepción abortada." << std::endl;
+      //     tarea3.join();
+      //   }
+      // } else {                            //< ABORT ENVIAR
+      //   if (tarea3.joinable()) {
+      //     quit_tarea2 = true;
+      //     std::cout << "Envío abortado." << std::endl;
+      //     tarea2.join();
+      //   }
+      // }
+    // } else if (command == pause_text) {   //< PAUSAR ENVIAR
+      // pause_send = true;
+      // std::cout << "Envío pausado." << std::endl;
+    // } else if (command == resume_text) {  //< REANUDAR ENVIAR
+      // pause_send = false;
+      // std::cout << "Envío reanudado." << std::endl;
+    // } else if (command == help_text) {    //< HELP
+    //   std::thread help_thread(help);
+    //   help_thread.join();
+    // } else if (command == quit_text) {    //< QUIT
+      // quit_tarea2 = true;
+      // quit_tarea3 = true;
+      // if (tarea2.joinable()) {
+      //   tarea2.join();
+      // }
+      // if (tarea3.joinable()) {
+      //   tarea3.join();
+      // }
     if (eptr) {
       std::cout << "EXCEPCION" << std ::endl;
       std::rethrow_exception(eptr);

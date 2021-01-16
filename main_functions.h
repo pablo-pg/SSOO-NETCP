@@ -29,10 +29,10 @@
 #include "./socket.h"
 
 
-void help();
+void help_function();
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send);
-int receive(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3);
+int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3);
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
