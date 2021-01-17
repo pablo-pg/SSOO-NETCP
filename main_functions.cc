@@ -51,7 +51,10 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
-      if (!quit_tarea2) {
+      if (quit_tarea2) {
+        std::cout << "Envío abortado." << std::endl;
+        return 0;
+      } else {
 std::this_thread::sleep_for(std::chrono::seconds(2));
         while (pause_send) {
           std::this_thread::yield();
@@ -59,9 +62,6 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
         remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
         std::cout << "Paquete enviado." << std::endl;
-      }  else {
-        std::cout << "Envío abortado" << std::endl;
-        return 0;
       }
     }
     std::cout << "~ Archivo enviado. ~" << std::endl;
@@ -69,7 +69,6 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
   catch (const std::exception& e) {
     eptr = std::current_exception();
   }
-std::cout << "Salgo de send" << std::endl;
   return 0;
 }
 

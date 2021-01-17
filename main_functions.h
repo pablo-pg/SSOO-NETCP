@@ -31,8 +31,10 @@
 
 void help_function();
 int send_file(std::exception_ptr& eptr, std::string argv,
-              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send);
-int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3);
+              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
+              std::atomic<bool>& quit_app);
+int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3,
+              std::atomic<bool>& quit_app);
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());

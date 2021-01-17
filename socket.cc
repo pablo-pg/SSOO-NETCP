@@ -74,7 +74,7 @@ void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
     throw std::system_error(errno, std::system_category(),
                             "no se pudo recibir el mensaje");
   } else {
-    std::cout << "Mensaje recibido" << std::endl;
+    std::cout << "Paquete recibido." << std::endl;
   }
 }
 

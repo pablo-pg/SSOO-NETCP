@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <atomic>
+#include <csignal>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -28,12 +29,36 @@
 #include "./main_functions.h"
 
 
-std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false);
+std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false),
+                  quit_app(false);
 
 int protected_main(const int& argc, char* argv[]);
 
+
+void signal_handler(int signal) {
+  std::string message;
+  if (signal == SIGUSR1) {
+    message = "Señal SIGUSR1 recibida.\n";
+    quit_tarea2 = true;
+  } else if (signal == SIGUSR2) {
+    message = "Señal SIGUSR2 recibida.\n";
+    quit_tarea3 = true;
+  } else if (signal == SIGINT || signal == SIGHUP || signal == SIGTERM) {
+    message = "Algo malo ha pasado. Cerrando el programa.\n";
+    quit_app = true;
+  }
+  write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
+}
+
 // MAIN
 int main(int argc, char* argv[]) {
+  struct sigaction signals = {0};
+  signals.sa_handler = &signal_handler;
+  sigaction(SIGUSR1, &signals, NULL);
+  sigaction(SIGUSR2, &signals, NULL);
+  sigaction(SIGINT, &signals, NULL);
+  sigaction(SIGHUP, &signals, NULL);
+  sigaction(SIGTERM, &signals, NULL);
   try {
     protected_main(argc, argv);
   }
@@ -96,19 +121,12 @@ int tarea1() {
   registred_commands["quit"] = quit;
   registred_commands["help"] = help;
   std::string command;
-  // std::string receive_text = "receive";
-  // std::string send_text = "send";
-  // std::string abort_text = "abort";
-  // std::string pause_text = "pause";
-  // std::string resume_text = "resume";
-  // std::string quit_text = "quit";
-  // std::string help_text = "help";
   std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << "los mostrará." << std::endl;
   std::thread tarea2, tarea3;
   std::exception_ptr eptr {};
-  while (command != "quit") {
+  while (command != "quit" || !quit_app) {
     std::string second_word, first_world;
     std::cout << ">>  ";
     std::getline(std::cin, command);
@@ -127,8 +145,6 @@ int tarea1() {
       }
       command = first_world;
     }
-    // std::thread help_thread;
-    // std::string folder_path;
     /// LOS COMANDOS
     switch (registred_commands[command]) {
       case send:                            //< ENVIAR
@@ -147,12 +163,6 @@ int tarea1() {
         } else {
           std::cout << "Carpeta creada." << std::endl;
         }
-        // std::string folder_path = "./";
-        // std::string actual_folder = "./";
-        // folder_path.append(second_word);
-        // actual_folder.append(getcwd());
-        // std::cout << "entrando en la carpeta " << folder_path << std::endl;
-        // chdir(folder_path.c_str());
         tarea3 = std::thread(receive_file, std::ref(eptr),
                              std::ref(quit_tarea3));
         break;
@@ -170,13 +180,15 @@ int tarea1() {
             quit_tarea3 = true;
             std::cout << "Recepción abortada." << std::endl;
             tarea3.join();
+          } else {
+            std::cout << "No se ha podido abortar." << std::endl;
           }
-        } else {                            //< ABORT ENVIAR
-          if (tarea3.joinable()) {
-            quit_tarea2 = true;
-            std::cout << "Envío abortado." << std::endl;
-            tarea2.join();
-          }
+        }                                   //< ABORT ENVIAR
+        if (tarea2.joinable()) {
+          quit_tarea2 = true;
+          tarea2.join();
+        } else {
+          std::cout << "No se ha podido abortar." << std::endl;
         }
         break;
       }
@@ -196,6 +208,7 @@ int tarea1() {
         if (tarea3.joinable()) {
           tarea3.join();
         }
+        return 0;
         break;
       }
       case help:                            //< HELP
