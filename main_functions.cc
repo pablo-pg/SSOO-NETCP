@@ -34,7 +34,8 @@ void help_function() {
 
 
 int send_file(std::exception_ptr& eptr, std::string argv,
-              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send) {
+              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
+              std::atomic<bool>& quit_app) {
   try {
     while (quit_tarea2) {
       return 0;
@@ -61,7 +62,8 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
         }
         remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
                       address_to_send, MESSAGE_SIZE);
-        std::cout << "Paquete enviado." << std::endl;
+        std::cout << "Paquete " << package+1 << "/" << metadata.packages_number
+                  << " enviado." << std::endl;
       }
     }
     std::cout << "~ Archivo enviado. ~" << std::endl;
@@ -72,7 +74,8 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
   return 0;
 }
 
-int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
+int receive_file(std::exception_ptr& eptr, std::string folder,
+                 std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
     try {
       if (quit_tarea3) {
         std::cout << "Recepción de mensaje abortada" << std::endl;
@@ -88,7 +91,7 @@ int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
     //           << "\nTamaño: " << metadata.file_size << std::endl;
     std::string string_filename(metadata.filename.data());
     // El archivo donde se guardará el mensaje recibido
-    File file("salida.txt", metadata.file_info);      //< cambiar fichero por metadata.filename
+    File file("temp_exit.txt", metadata.file_info);
     std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number - 1; i++) {
       if (quit_tarea3) {
@@ -97,18 +100,25 @@ int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3) {
       } else {
         local.receive_from(address_to_receive,
                   file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
+        std::cout << "Paquete " << i+1 << "/" << metadata.packages_number
+                  << " recibido." << std::endl;
       }
     }
     if (metadata.file_size % MESSAGE_SIZE != 0) {
       local.receive_from(address_to_receive,
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
-                          metadata.file_size % MESSAGE_SIZE);
+            metadata.file_size % MESSAGE_SIZE);
+      std::cout << "Paquete " << metadata.packages_number << "/"
+                << metadata.packages_number << " recibido." << std::endl;
     } else {
       local.receive_from(address_to_receive,
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
+      std::cout << "Paquete " << metadata.packages_number << "/"
+                << metadata.packages_number << " recibido." << std::endl;
     }
     std::cout << "~ Archivo recibido. ~" << std::endl;
+    move_file(metadata.filename, folder);
   }
   catch (const std::exception& e) {
     eptr = std::current_exception();
@@ -154,3 +164,24 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
   metadata.file_info = meta_info;
   return metadata;
 }
+
+
+void move_file(const std::array<char, 1024UL>& file_name,
+               const std::string & folder_name) {
+  std::string cmd_str;
+  cmd_str.append("mv ");
+  cmd_str.append(get_current_dir_name());
+  cmd_str.append("/");
+  cmd_str.append("temp_exit.txt ");
+  cmd_str.append(get_current_dir_name());
+  cmd_str.append("/");
+  cmd_str.append(folder_name);
+  cmd_str.append(file_name.data());
+  // std::cout << cmd_str << std::endl;
+  char* cmd;
+  std::strcpy(cmd, cmd_str.c_str());
+  system(cmd);
+}
+
+
+

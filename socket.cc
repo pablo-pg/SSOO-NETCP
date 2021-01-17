@@ -45,8 +45,6 @@ void Socket::send_to(const void* message, const sockaddr_in& address,
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo enviar el mensaje");
-  } else {
-    // std::cout << "Paquete enviado." << std::endl;
   }
 }
 
@@ -73,8 +71,6 @@ void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
   if (result < 0) {
     throw std::system_error(errno, std::system_category(),
                             "no se pudo recibir el mensaje");
-  } else {
-    std::cout << "Paquete recibido." << std::endl;
   }
 }
 

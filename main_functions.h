@@ -15,8 +15,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <system_error>
 #include <atomic>
 #include <cstring>
@@ -33,8 +35,8 @@ void help_function();
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
               std::atomic<bool>& quit_app);
-int receive_file(std::exception_ptr& eptr, std::atomic<bool>& quit_tarea3,
-              std::atomic<bool>& quit_app);
+int receive_file(std::exception_ptr& eptr, std::string folder,
+              std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app);
 
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
@@ -42,5 +44,7 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
 FileMetadata SetMetadata(const std::string& text, const std::string& filename,
                           const struct stat& meta_info);
 
+void move_file(const std::array<char, 1024UL>& file_name,
+               const std::string& folder_name);
 
 #endif  // MAIN_FUNCTIONS_H_

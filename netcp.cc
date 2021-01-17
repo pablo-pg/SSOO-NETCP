@@ -44,8 +44,10 @@ void signal_handler(int signal) {
     message = "Señal SIGUSR2 recibida.\n";
     quit_tarea3 = true;
   } else if (signal == SIGINT || signal == SIGHUP || signal == SIGTERM) {
-    message = "Algo malo ha pasado. Cerrando el programa.\n";
+    message = "\nAlgo malo ha pasado. Cerrando el programa.\n";
     quit_app = true;
+    write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
+    exit(1);
   }
   write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
 }
@@ -111,7 +113,7 @@ int protected_main(const int& argc, char* argv[]) {
 
 
 int tarea1() {
-  enum all_commands {send, receive, pause, abort, resume, quit, help};
+  enum all_commands {send = 1, receive, pause, abort, resume, quit, help};
   std::map<std::string, all_commands> registred_commands;
   registred_commands["send"] = send;
   registred_commands["receive"] = receive;
@@ -150,7 +152,8 @@ int tarea1() {
       case send:                            //< ENVIAR
       {
         tarea2 = std::thread(send_file, std::ref(eptr), second_word,
-                           std::ref(quit_tarea2), std::ref(pause_send));
+                           std::ref(quit_tarea2), std::ref(pause_send),
+                           std::ref(quit_app));
         break;
       }
       case receive:                         //< RECIBIR
@@ -163,8 +166,8 @@ int tarea1() {
         } else {
           std::cout << "Carpeta creada." << std::endl;
         }
-        tarea3 = std::thread(receive_file, std::ref(eptr),
-                             std::ref(quit_tarea3));
+        tarea3 = std::thread(receive_file, std::ref(eptr), second_word,
+                             std::ref(quit_tarea3), std::ref(quit_app));
         break;
       }
       case pause:                           //< PAUSE
@@ -178,6 +181,7 @@ int tarea1() {
         if (second_word == "receive") {     //< ABORT RECIBIR
           if (tarea3.joinable()) {
             quit_tarea3 = true;
+            kill(tarea3.native_handle(), SIGUSR1);
             std::cout << "Recepción abortada." << std::endl;
             tarea3.join();
           } else {
@@ -222,53 +226,6 @@ int tarea1() {
         std::cout << "Comando no válido, vuelva a intentarlo." << std::endl;
       }
     }
-    // if (command == receive_text) {        //< RECIBIR
-      // ----> Creo, hay funciones que crean y verifican si existe un directorio
-      // std::cout << "Creando la carpeta " << second_word << "..." << std::endl;
-      // int fail = mkdir(second_word.c_str(), 0777);
-      // if (fail == -1) {
-      //   std::cerr << "Netcp: No se pudo crear la carpeta: "
-      //             << std::strerror(errno) << "(" << errno << ")" << std::endl;
-      // } else {
-      //   std::cout << "Carpeta creada." << std::endl;
-      // }
-      // std::string path = second_word;
-      // tarea3 = std::thread(receive, std::ref(eptr), std::ref(quit_tarea3));
-    // } else if (command == send_text) {    //< ENVIAR
-    //   tarea2 = std::thread(send_file, std::ref(eptr), second_word,
-    //                        std::ref(quit_tarea2), std::ref(pause_send));
-    // } else if (command == abort_text) {
-      // if (second_word == receive_text) {  //< ABORT RECIBIR
-      //   if (tarea3.joinable()) {
-      //     quit_tarea3 = true;
-      //     std::cout << "Recepción abortada." << std::endl;
-      //     tarea3.join();
-      //   }
-      // } else {                            //< ABORT ENVIAR
-      //   if (tarea3.joinable()) {
-      //     quit_tarea2 = true;
-      //     std::cout << "Envío abortado." << std::endl;
-      //     tarea2.join();
-      //   }
-      // }
-    // } else if (command == pause_text) {   //< PAUSAR ENVIAR
-      // pause_send = true;
-      // std::cout << "Envío pausado." << std::endl;
-    // } else if (command == resume_text) {  //< REANUDAR ENVIAR
-      // pause_send = false;
-      // std::cout << "Envío reanudado." << std::endl;
-    // } else if (command == help_text) {    //< HELP
-    //   std::thread help_thread(help);
-    //   help_thread.join();
-    // } else if (command == quit_text) {    //< QUIT
-      // quit_tarea2 = true;
-      // quit_tarea3 = true;
-      // if (tarea2.joinable()) {
-      //   tarea2.join();
-      // }
-      // if (tarea3.joinable()) {
-      //   tarea3.join();
-      // }
     if (eptr) {
       std::cout << "EXCEPCION" << std ::endl;
       std::rethrow_exception(eptr);
