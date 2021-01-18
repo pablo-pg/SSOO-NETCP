@@ -32,7 +32,16 @@ void help_function() {
             << " el resto de recursos utilizados." << std::endl;
 }
 
-
+/**
+ * @brief Envía un archivo a una dirección conocida (env).
+ * 
+ * @param eptr si ocurren excepciones.
+ * @param argv el nombre del fichero a enviar.
+ * @param quit_tarea2 si debe cancelarse el envío.
+ * @param pause_send si  debe pausarse el envío.
+ * @param quit_app si debe cancelarse el envío y cerrar el programa.
+ * @return int 0 si no hay ningún fallo.
+ */
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
               std::atomic<bool>& quit_app) {
@@ -80,34 +89,47 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
   return 0;
 }
 
+
+/**
+ * @brief Recibe un archivo desde una dirección conocida (env) y lo mueve a
+ * la carpeta creada "folder".
+ * 
+ * @param eptr si ocurren excepciones.
+ * @param folder el nombre del fichero a enviar.
+ * @param quit_tarea3 si debe cancelarse el envío.
+ * @param quit_app si debe cancelarse el envío y cerrar el programa.
+ * @return int 0 si no hay ningún fallo.
+ */
 int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
   try {
     if (!quit_app && !quit_tarea3) {
+      /// Se establecen las direcciones  puertos.
       Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
                   getenv("NETCP_DEST_IP")));
-      FileMetadata metadata;
       sockaddr_in address_to_receive = make_ip_address(
                   std::atoi(getenv("NETCP_PORT")), getenv("NETCP_IP"));
+      FileMetadata metadata;
       if (!quit_app && !quit_tarea3) {
+        /// Se reciben los metadatos.
         metadata = local.receive_metadata(address_to_receive);
       }
       if (errno != EINTR) {
-std::cout << "prueba1" << std::endl;
         std::string string_filename(metadata.filename.data());
-        // El archivo donde se guardará el mensaje recibido
+        // El archivo donde se guardará el mensaje recibido.
         File file("temp_exit.txt", metadata.file_info);
         for (int i {0}; i < metadata.packages_number - 1; i++) {
           if (quit_tarea3 || quit_app) {
             std::cout << "Recepción de mensaje abortada." << std::endl;
             return 0;
           } else {
+            /// SE RECIBE EL MENSAJE Y SE MAPEA EN MEMORIA.
             local.receive_from(address_to_receive,
                   file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
             std::cout << "Paquete " << i+1 << "/" << metadata.packages_number
                       << " recibido." << std::endl;
           }
-        }
+        }    /// Se escribe en memoria el último paquete.
         if (metadata.file_size % MESSAGE_SIZE != 0) {
           local.receive_from(address_to_receive,
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
@@ -135,7 +157,13 @@ std::cout << "prueba1" << std::endl;
 
 // FUNCIONES SECUNDARIAS
 
-
+/**
+ * @brief Se crea una dirección válida donde serán enviados/recibidos ficheros.
+ * 
+ * @param port es el puerto a conectarse.
+ * @param ip_address es la dirección IP a conectarse,
+ * @return sockaddr_in es la estructura válida para el envío de mensajes.
+ */
 sockaddr_in make_ip_address(int port, const std::string& ip_address) {
   sockaddr_in direction{};
   direction.sin_family = AF_INET;
@@ -158,6 +186,14 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
 }
 
 
+/**
+ * @brief Se establecen los metadatos del fichero.
+ * 
+ * @param text es el contenido del fichero.
+ * @param filename es el nombre del fichero
+ * @param meta_info es el conjunto de datos (permisos, usuarios, tamaño,..).
+ * @return FileMetadata es la estructura con todos los metadatos.
+ */
 FileMetadata SetMetadata(const std::string& text, const std::string& filename,
                           const struct stat& meta_info) {
   FileMetadata metadata;
