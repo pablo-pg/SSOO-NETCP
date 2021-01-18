@@ -53,4 +53,12 @@ void make_send(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
               std::atomic<bool>& quit_app);
 
+
+/// STRUCTS
+
+struct SendingTask{
+  std::thread send_thread;
+  bool sent = 0;
+};
+
 #endif  // MAIN_FUNCTIONS_H_

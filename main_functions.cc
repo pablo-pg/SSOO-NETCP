@@ -71,7 +71,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
         std::cout << "Envío abortado." << std::endl;
         return 0;
       } else {
-std::this_thread::sleep_for(std::chrono::seconds(10));     //< Hago que espere 2s
+std::this_thread::sleep_for(std::chrono::seconds(5));     //< Hago que espere 2s
         while (pause_send) {
           std::this_thread::yield();
         }
