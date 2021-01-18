@@ -38,6 +38,8 @@ int send_file(std::exception_ptr& eptr, std::string argv,
 int receive_file(std::exception_ptr& eptr, std::string folder,
               std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app);
 
+/// FUNCIONES SECUNDARIAS.
+
 sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
 
@@ -46,5 +48,9 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
 
 void move_file(const std::array<char, 1024UL>& file_name,
                const std::string& folder_name);
+
+void make_send(std::exception_ptr& eptr, std::string argv,
+              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
+              std::atomic<bool>& quit_app);
 
 #endif  // MAIN_FUNCTIONS_H_

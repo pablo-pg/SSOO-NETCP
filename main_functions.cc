@@ -71,7 +71,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
         std::cout << "Envío abortado." << std::endl;
         return 0;
       } else {
-std::this_thread::sleep_for(std::chrono::seconds(2));
+std::this_thread::sleep_for(std::chrono::seconds(10));     //< Hago que espere 2s
         while (pause_send) {
           std::this_thread::yield();
         }
@@ -232,4 +232,12 @@ void move_file(const std::array<char, 1024UL>& file_name,
 }
 
 
-
+void make_send(std::exception_ptr& eptr, std::string second_word,
+              std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
+              std::atomic<bool>& quit_app) {
+  std::thread send_thread;
+  send_thread = std::thread(send_file, std::ref(eptr), second_word,
+                           std::ref(quit_tarea2), std::ref(pause_send),
+                           std::ref(quit_app));
+  send_thread.join();
+}

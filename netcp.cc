@@ -23,7 +23,7 @@
 #include <system_error>
 #include <thread>
 #include <utility>
-#include <vector>
+#include <unordered_map>
 
 #include "./socket.h"
 #include "./message.h"
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 int tarea1();
 
 int protected_main(const int& argc, char* argv[]) {
-  while (!quit_app) {
+  if (!quit_app) {
     try {
       std::string help_text = "--help", help_text2 = "-h";
       if (argc == 1) {
@@ -146,7 +146,7 @@ int tarea1() {
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << " los mostrará." << std::endl;
   std::thread tarea2, tarea3;             //< Los hilos de envío y recepción
-  std::vector<std::pair<int, std::thread>> table;  //< Vector de hilos multiarch
+  std::unordered_map<int, std::thread> table;  //< Vector de hilos multiarch
   int count = 0;
   std::exception_ptr eptr {};
   while (command != "quit" || !quit_app) {
@@ -174,24 +174,27 @@ int tarea1() {
     switch (registred_commands[command]) {
       case send:                            //< ENVIAR
       {
-        // count++;
-        // table.push_back(std::make_pair(count, std::thread(send_file, std::ref(eptr), second_word,
+        count++;
+        table.insert(std::make_pair(count,
+                        std::thread(make_send, std::ref(eptr), second_word,
+                        std::ref(quit_tarea2), std::ref(pause_send),
+                        std::ref(quit_app))));
+// std::cout << "1id? " << table[0].get_id() << std::endl;
+        std::cout << "Lista de hilos: " << std::endl;
+        for (auto& element : table) {
+          std::cout << "Id: " << element.first << std::endl;
+          if (element.second.joinable()) {
+            std::cout << "\tEl hilo " << element.first << " puede terminar"
+                      << std::endl;
+            element.second.join();
+          } else {
+            // table.erase(element.first);
+          }
+        }
+// std::cout << "2id? " << table[0].get_id() << std::endl;
+        // tarea2 = std::thread(send_file, std::ref(eptr), second_word,
         //                    std::ref(quit_tarea2), std::ref(pause_send),
-        //                    std::ref(quit_app)) ) );
-        // std::cout << "1id? " << table[0].second.get_id() << std::endl;
-        // std::cout << "Lista de hilos: " << std::endl;
-        // for (size_t i = 0; i < table.size(); i++) {
-        //   std::cout << "Id: " << table[i].first << std::endl;
-        //   if (table[i].second.joinable()) {
-        //     std::cout << "El hilo " << table[i].first << " puede terminar" << std::endl;
-        //     table[i].second.join();
-        //     table[i].first = 0;
-        //   }
-        // }
-        // std::cout << "2id? " << table[0].second.get_id() << std::endl;
-        tarea2 = std::thread(send_file, std::ref(eptr), second_word,
-                           std::ref(quit_tarea2), std::ref(pause_send),
-                           std::ref(quit_app));
+        //                    std::ref(quit_app));
         break;
       }
       case receive:                         //< RECIBIR
@@ -252,6 +255,7 @@ int tarea1() {
           tarea3.join();
         }
         return 0;
+std::cout << "Saliendo..." << std::endl;
         break;
       }
       case help:                            //< HELP
