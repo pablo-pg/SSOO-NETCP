@@ -37,7 +37,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
               std::atomic<bool>& quit_app) {
   try {
-    while (quit_tarea2) {
+    if (quit_tarea2 || quit_app) {
       return 0;
     }
     while (pause_send) {
@@ -52,7 +52,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     Socket remote(make_ip_address(3000, "127.0.0.3"));
     remote.send_to(metadata, address_to_send);
     for (int package {0}; package < metadata.packages_number; package++) {
-      if (quit_tarea2) {
+      if (quit_tarea2 || quit_app) {
         std::cout << "Envío abortado." << std::endl;
         return 0;
       } else {
@@ -77,7 +77,7 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
 int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
     try {
-      if (quit_tarea3) {
+      if (quit_tarea3 || quit_app) {
         std::cout << "Recepción de mensaje abortada" << std::endl;
         return 0;
       }
@@ -92,10 +92,10 @@ int receive_file(std::exception_ptr& eptr, std::string folder,
     std::string string_filename(metadata.filename.data());
     // El archivo donde se guardará el mensaje recibido
     File file("temp_exit.txt", metadata.file_info);
-    std::string total_text;   //< Todo el contenido de todos los mensajes juntos
+    // std::string total_text;   //< Todo el contenido de todos los mensajes juntos
     for (int i {0}; i < metadata.packages_number - 1; i++) {
-      if (quit_tarea3) {
-        std::cout << "Recepción de mensaje abortada" << std::endl;
+      if (quit_tarea3 || quit_app) {
+        std::cout << "Recepción de mensaje abortada." << std::endl;
         return 0;
       } else {
         local.receive_from(address_to_receive,
@@ -176,8 +176,8 @@ void move_file(const std::array<char, 1024UL>& file_name,
   cmd_str.append(get_current_dir_name());
   cmd_str.append("/");
   cmd_str.append(folder_name);
+  cmd_str.append("/");
   cmd_str.append(file_name.data());
-  // std::cout << cmd_str << std::endl;
   char* cmd;
   std::strcpy(cmd, cmd_str.c_str());
   system(cmd);

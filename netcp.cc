@@ -34,30 +34,49 @@ std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false),
 
 int protected_main(const int& argc, char* argv[]);
 
+typedef void (*sighandler_t)(int);
 
-void signal_handler(int signal) {
-  std::string message;
-  if (signal == SIGUSR1) {
-    message = "Señal SIGUSR1 recibida.\n";
-    quit_tarea2 = true;
-  } else if (signal == SIGUSR2) {
-    message = "Señal SIGUSR2 recibida.\n";
-    quit_tarea3 = true;
-  } else if (signal == SIGINT || signal == SIGHUP || signal == SIGTERM) {
-    message = "\nAlgo malo ha pasado. Cerrando el programa.\n";
+sighandler_t signal(int signum, sighandler_t handler);
+
+void signal_handler(int sign) {
+  if (sign == SIGINT || sign==SIGHUP || sign == SIGTERM) {
+    std::cout << "\nHa llegado una señal \n";
     quit_app = true;
-    write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
-    exit(1);
+        // request_cancellation(gloenviar);
   }
-  write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
 }
+// void signal_handler(int signal) {
+//   std::string message;
+//   if (signal == SIGUSR1) {
+//     message = "Señal SIGUSR1 recibida.\n";
+//     quit_tarea2 = true;
+//   } else if (signal == SIGUSR2) {
+//     message = "Señal SIGUSR2 recibida.\n";
+//     quit_tarea3 = true;
+//   } else if (signal == SIGINT || signal == SIGHUP || signal == SIGTERM) {
+//     message = "\nAlgo malo ha pasado. Cerrando el programa.\n";
+//     quit_app = true;
+//     write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
+//     exit(1);
+//   }
+//   write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
+// }
+
+// void signals_waiter () {
+//   sigset_t sigwaitset;
+//   int signals;
+//   sigemptyset(&sigwaitset);
+//   sigaddset(&sigwaitset, SIGINT);
+//   sigaddset(&sigwaitset, SIGTERM);
+//   sigaddset(&sigwaitset, SIGHUP);
+//   sigwait(&sigwaitset, &signals);}
+//   std::thread handler;
+//   handler = std::thread(signal_handler, signals);
 
 // MAIN
 int main(int argc, char* argv[]) {
   struct sigaction signals = {0};
   signals.sa_handler = &signal_handler;
-  sigaction(SIGUSR1, &signals, NULL);
-  sigaction(SIGUSR2, &signals, NULL);
   sigaction(SIGINT, &signals, NULL);
   sigaction(SIGHUP, &signals, NULL);
   sigaction(SIGTERM, &signals, NULL);
@@ -81,32 +100,48 @@ int main(int argc, char* argv[]) {
 int tarea1();
 
 int protected_main(const int& argc, char* argv[]) {
-  try {
-    std::string help_text = "--help", help_text2 = "-h";
-    if (argc == 1) {
-      std::thread tarea1_thread(tarea1);
-      tarea1_thread.join();
-    } else if (argc == 2) {
-      if (argv[1] == help_text || argv[1] == help_text2) {
-        help_function();
+  while (!quit_app) {
+    try {
+      std::string help_text = "--help", help_text2 = "-h";
+      if (argc == 1) {
+        // sigset_t sigwaitset;
+        // sigemptyset(&sigwaitset);
+        // sigaddset(&sigwaitset, SIGINT);
+        // sigaddset(&sigwaitset, SIGTERM);
+        // sigaddset(&sigwaitset, SIGHUP);
+        // while (true) {
+          // int sign;
+          // sigwait(&sigwaitset, &sign);
+          // if (sign == SIGINT || sign == SIGTERM || sign == SIGHUP) {
+            // std::thread sign_thread(signals_waiter);
+            // sign_thread.detach();
+          // } else {
+            std::thread tarea1_thread(tarea1);
+            tarea1_thread.join();
+          // }
+        // }
+      } else if (argc == 2) {
+        if (argv[1] == help_text || argv[1] == help_text2) {
+          help_function();
+        }
+      } else {
+        throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
+                              "Este programa no requiere argumentos.\n"
+                              "Use el parámetro \"-h\" para leer ayuda.");
       }
-    } else {
-      throw std::invalid_argument("Se han introducido demasiados argumentos.\n"
-                            "Este programa no requiere argumentos.\n"
-                            "Use el parámetro \"-h\" para leer ayuda.");
     }
-  }
-  catch(std::bad_alloc& e) {
-    std::cerr << "netcp" << ": memoria insuficiente\n";
-    return 1;
-  }
-  catch(std::system_error& e) {
-    std::cerr << "netcp" << ": " << e.what() << '\n';
-    return 2;
-  }
-  catch(std::invalid_argument& e) {
-    std::cerr << "netcp: " << e.what() << std::endl;
-    return 3;
+    catch(std::bad_alloc& e) {
+      std::cerr << "netcp" << ": memoria insuficiente\n";
+      return 1;
+    }
+    catch(std::system_error& e) {
+      std::cerr << "netcp" << ": " << e.what() << '\n';
+      return 2;
+    }
+    catch(std::invalid_argument& e) {
+      std::cerr << "netcp: " << e.what() << std::endl;
+      return 3;
+    }
   }
   return 0;
 }
@@ -125,15 +160,17 @@ int tarea1() {
   std::string command;
   std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
-            << "los mostrará." << std::endl;
+            << " los mostrará." << std::endl;
   std::thread tarea2, tarea3;
   std::exception_ptr eptr {};
   while (command != "quit" || !quit_app) {
     std::string second_word, first_world;
     std::cout << ">>  ";
+    if (quit_app) {
+      return 0;
+    }
     std::getline(std::cin, command);
     size_t space_pos = command.find(' ');
-    // ---> La lectura de comandos se puede mejorar
     if (space_pos != std::string::npos) {
       for (size_t pos = space_pos; pos < command.size(); ++pos) {
         if (command[pos] != ' ') {
@@ -168,6 +205,7 @@ int tarea1() {
         }
         tarea3 = std::thread(receive_file, std::ref(eptr), second_word,
                              std::ref(quit_tarea3), std::ref(quit_app));
+        kill(tarea3.native_handle(), SIGUSR1);
         break;
       }
       case pause:                           //< PAUSE
