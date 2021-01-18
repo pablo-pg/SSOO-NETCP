@@ -155,7 +155,27 @@ int receive_file(std::exception_ptr& eptr, std::string folder,
 }
 
 
-// FUNCIONES SECUNDARIAS
+/// CONTROLADOR DE SEÑALES
+
+void signal_handler(const sigset_t& set) {
+  extern std::atomic_bool quit_app;
+  while (true) {
+    int signum;
+    sigwait(&set, &signum);
+    if (signum == SIGINT || signum == SIGHUP || signum == SIGTERM) {
+      std::cout << "\nHa llegado una señal crítica\n";
+      quit_app = true;
+      exit(1);
+    }
+  }
+}
+
+void usr1_funct(int signal) {
+  const char* message = "¡Algo ha ido mal! Señal SIGUSR1 recibida.\n";
+  write(STDOUT_FILENO, message, strlen(message));
+}
+
+/// FUNCIONES SECUNDARIAS
 
 /**
  * @brief Se crea una dirección válida donde serán enviados/recibidos ficheros.
@@ -234,7 +254,8 @@ void move_file(const std::array<char, 1024UL>& file_name,
 
 void make_send(std::exception_ptr& eptr, std::string second_word,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app) {
+              std::atomic<bool>& quit_app, std::atomic<bool>& pause_send_task,
+              std::atomic<bool>& abort_send_task) {
   std::thread send_thread;
   send_thread = std::thread(send_file, std::ref(eptr), second_word,
                            std::ref(quit_tarea2), std::ref(pause_send),

@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <system_error>
 #include <atomic>
+#include <csignal>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -31,12 +32,21 @@
 #include "./socket.h"
 
 
+// std::atomic<bool> quit_tarea2{false}, quit_tarea3{false}, pause_send{false },
+//                   quit_app{false};
+
+
 void help_function();
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
               std::atomic<bool>& quit_app);
 int receive_file(std::exception_ptr& eptr, std::string folder,
               std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app);
+
+
+/// CONTROLADOR DE SEÑALES
+void signal_handler(const sigset_t& set);
+void usr1_funct(int signal);
 
 /// FUNCIONES SECUNDARIAS.
 
@@ -51,7 +61,8 @@ void move_file(const std::array<char, 1024UL>& file_name,
 
 void make_send(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app);
+              std::atomic<bool>& quit_app, std::atomic<bool>& pause_send_task,
+              std::atomic<bool>& abort_send_task);
 
 
 /// STRUCTS
@@ -59,6 +70,8 @@ void make_send(std::exception_ptr& eptr, std::string argv,
 struct SendingTask{
   std::thread send_thread;
   bool sent = 0;
+  std::atomic<bool> pause_send_task{false};
+  std::atomic<bool> abort_send_task{false};
 };
 
 #endif  // MAIN_FUNCTIONS_H_
