@@ -34,8 +34,6 @@
 std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false),
                   quit_app(false);
 
-int protected_main(const int& argc, char* argv[]);
-
 
 void signal_handler(sigset_t& set) {
   while (true) {
@@ -54,6 +52,8 @@ void usr1_funct(int signal) {
   write(STDOUT_FILENO, message, strlen(message));
 }
 
+
+int protected_main(const int& argc, char* argv[]);
 
 // MAIN
 int main(int argc, char* argv[]) {
@@ -81,6 +81,12 @@ int protected_main(const int& argc, char* argv[]) {
     try {
       std::string help_text = "--help", help_text2 = "-h";
       if (argc == 1) {
+        /// SE ESTABLECEN LAS VARIABLES DE ENTORNO
+        setenv("NETCP_DEST_IP", "127.0.0.1", 0);
+        setenv("NETCP_DEST_PORT", "2000", 0);
+        setenv("NETCP_IP", "127.0.0.3", 0);
+        setenv("NETCP_PORT", "3000", 0);
+        /// En el caso de señales críticas
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
@@ -88,11 +94,14 @@ int protected_main(const int& argc, char* argv[]) {
         sigaddset(&set, SIGHUP);
         sigaddset(&set, SIGUSR1);
         sigprocmask(SIG_BLOCK, &set, NULL);
+        /// Se llama a la función encargada de controlar las señales críticas.
         std::thread sign_thread(signal_handler, std::ref(set));
         sign_thread.detach();
+        /// Para el caso de la señal SIGUSR1
         struct sigaction act = {0};
         sigaction(SIGUSR1, &act, NULL);
         act.sa_handler = &usr1_funct;
+        /// PROGRAMA PRINCIPAL - Hilo tarea1
         std::thread tarea1_thread(tarea1);
         tarea1_thread.join();
       } else if (argc == 2) {

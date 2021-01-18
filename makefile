@@ -25,15 +25,10 @@ OBJ = socket.o file.o netcp.o main_functions.o
 netcp: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-
-run: clean netcp
-	clear
-	./netcp receive
-
-withfile: clean netcp
-	./netcp send prueba.txt
-
 clean:
-	rm -f hellomake *.o netcp salida.txt
+	rm -f hellomake *.o netcp temp_exit.txt
 
 clear: clean
+celar: clean
+claer: clean
+claen: clean

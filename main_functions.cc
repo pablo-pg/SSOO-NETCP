@@ -46,11 +46,17 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     std::string filename;
     filename = argv;
     File file(filename);
+    /// Se establecen los metadatos del fichero.
     FileMetadata metadata;
     metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo());
-    sockaddr_in address_to_send = make_ip_address(2000, "127.0.0.1");
-    Socket remote(make_ip_address(3000, "127.0.0.3"));
-    remote.send_to(metadata, address_to_send);
+    sockaddr_in address_to_send = make_ip_address(
+            std::atoi(getenv("NETCP_DEST_PORT")),     //< El puerto pasado a int
+            getenv("NETCP_DEST_IP"));
+    /// Se prepara el socket que se envía.
+    Socket remote(make_ip_address(std::atoi(getenv("NETCP_PORT")),
+                  getenv("NETCP_IP")));
+    remote.send_to(metadata, address_to_send);      //< Se envían los metadatos.
+    /// SE ENVÍA LA INFORMACIÓN
     for (int package {0}; package < metadata.packages_number; package++) {
       if (quit_tarea2 || quit_app) {
         std::cout << "Envío abortado." << std::endl;
@@ -78,9 +84,11 @@ int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
   try {
     if (!quit_app && !quit_tarea3) {
-      Socket local(make_ip_address(2000, "127.0.0.1"));
+      Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
+                  getenv("NETCP_DEST_IP")));
       FileMetadata metadata;
-      sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
+      sockaddr_in address_to_receive = make_ip_address(
+                  std::atoi(getenv("NETCP_PORT")), getenv("NETCP_IP"));
       if (!quit_app && !quit_tarea3) {
         metadata = local.receive_metadata(address_to_receive);
       }
@@ -163,7 +171,12 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
   return metadata;
 }
 
-
+/**
+ * @brief Se mueve el fichero recibido a la ubicación deseada.
+ * 
+ * @param file_name Nombre que se quiere poner al fichero.
+ * @param folder_name Nombre de la carpeta donde se va a guardar
+ */
 void move_file(const std::array<char, 1024UL>& file_name,
                const std::string & folder_name) {
   std::string cmd_str;
@@ -177,6 +190,7 @@ void move_file(const std::array<char, 1024UL>& file_name,
   cmd_str.append("/");
   cmd_str.append(file_name.data());
   char* cmd;
+  // std::cout << cmd_str << std::endl;
   std::strcpy(cmd, cmd_str.c_str());
   system(cmd);
 }
