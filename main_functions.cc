@@ -76,49 +76,47 @@ std::this_thread::sleep_for(std::chrono::seconds(2));
 
 int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
-    try {
-      if (quit_tarea3 || quit_app) {
-        std::cout << "Recepción de mensaje abortada" << std::endl;
-        return 0;
+  try {
+    if (!quit_app && !quit_tarea3) {
+      Socket local(make_ip_address(2000, "127.0.0.1"));
+      FileMetadata metadata;
+      sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
+      if (!quit_app && !quit_tarea3) {
+        metadata = local.receive_metadata(address_to_receive);
       }
-    Socket local(make_ip_address(2000, "127.0.0.1"));
-    FileMetadata metadata;
-    sockaddr_in address_to_receive = make_ip_address(3000, "127.0.0.3");
-    metadata = local.receive_metadata(address_to_receive);
-    // Chivatos del metadata
-    // std::cout << "Datos de:" << metadata.filename.data()
-    //           << "\nSeparado en: " << metadata.packages_number
-    //           << "\nTamaño: " << metadata.file_size << std::endl;
-    std::string string_filename(metadata.filename.data());
-    // El archivo donde se guardará el mensaje recibido
-    File file("temp_exit.txt", metadata.file_info);
-    // std::string total_text;   //< Todo el contenido de todos los mensajes juntos
-    for (int i {0}; i < metadata.packages_number - 1; i++) {
-      if (quit_tarea3 || quit_app) {
-        std::cout << "Recepción de mensaje abortada." << std::endl;
-        return 0;
-      } else {
-        local.receive_from(address_to_receive,
+      if (errno != EINTR) {
+std::cout << "prueba1" << std::endl;
+        std::string string_filename(metadata.filename.data());
+        // El archivo donde se guardará el mensaje recibido
+        File file("temp_exit.txt", metadata.file_info);
+        for (int i {0}; i < metadata.packages_number - 1; i++) {
+          if (quit_tarea3 || quit_app) {
+            std::cout << "Recepción de mensaje abortada." << std::endl;
+            return 0;
+          } else {
+            local.receive_from(address_to_receive,
                   file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
-        std::cout << "Paquete " << i+1 << "/" << metadata.packages_number
-                  << " recibido." << std::endl;
-      }
-    }
-    if (metadata.file_size % MESSAGE_SIZE != 0) {
-      local.receive_from(address_to_receive,
+            std::cout << "Paquete " << i+1 << "/" << metadata.packages_number
+                      << " recibido." << std::endl;
+          }
+        }
+        if (metadata.file_size % MESSAGE_SIZE != 0) {
+          local.receive_from(address_to_receive,
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             metadata.file_size % MESSAGE_SIZE);
-      std::cout << "Paquete " << metadata.packages_number << "/"
-                << metadata.packages_number << " recibido." << std::endl;
-    } else {
-      local.receive_from(address_to_receive,
+          std::cout << "Paquete " << metadata.packages_number << "/"
+                    << metadata.packages_number << " recibido." << std::endl;
+        } else {
+          local.receive_from(address_to_receive,
             file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
             MESSAGE_SIZE);
-      std::cout << "Paquete " << metadata.packages_number << "/"
-                << metadata.packages_number << " recibido." << std::endl;
+          std::cout << "Paquete " << metadata.packages_number << "/"
+                    << metadata.packages_number << " recibido." << std::endl;
+        }
+        std::cout << "~ Archivo recibido. ~" << std::endl;
+        move_file(metadata.filename, folder);
+      }
     }
-    std::cout << "~ Archivo recibido. ~" << std::endl;
-    move_file(metadata.filename, folder);
   }
   catch (const std::exception& e) {
     eptr = std::current_exception();

@@ -69,8 +69,10 @@ void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
   int result = recvfrom(fd_, mem_zone, size, 0,
                       reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
-    throw std::system_error(errno, std::system_category(),
+    // if (errno != EINTR) {
+      throw std::system_error(errno, std::system_category(),
                             "no se pudo recibir el mensaje");
+    // }
   }
 }
 
@@ -82,10 +84,11 @@ FileMetadata Socket::receive_metadata(const sockaddr_in& address) {
   int result = recvfrom(fd_, &metadata, sizeof(metadata), 0,
                       reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
-    throw std::system_error(errno, std::system_category(),
+    // if (errno != EINTR) {
+      throw std::system_error(errno, std::system_category(),
                             "no se pudieron recibir los datos");
+    // }
   } else {
-    // std::cout << "Datos recibidos" << std::endl;
     return metadata;
   }
 }

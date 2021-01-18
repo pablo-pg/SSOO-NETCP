@@ -22,6 +22,8 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "./socket.h"
 #include "./message.h"
@@ -34,52 +36,27 @@ std::atomic<bool> quit_tarea2(false), quit_tarea3(false), pause_send(false),
 
 int protected_main(const int& argc, char* argv[]);
 
-typedef void (*sighandler_t)(int);
 
-sighandler_t signal(int signum, sighandler_t handler);
-
-void signal_handler(int sign) {
-  if (sign == SIGINT || sign==SIGHUP || sign == SIGTERM) {
-    std::cout << "\nHa llegado una señal \n";
-    quit_app = true;
-        // request_cancellation(gloenviar);
+void signal_handler(sigset_t& set) {
+  while (true) {
+    int signum;
+    sigwait(&set, &signum);
+    if (signum == SIGINT || signum == SIGHUP || signum == SIGTERM) {
+      std::cout << "\nHa llegado una señal crítica\n";
+      quit_app = true;
+      exit(-1);
+    }
   }
 }
-// void signal_handler(int signal) {
-//   std::string message;
-//   if (signal == SIGUSR1) {
-//     message = "Señal SIGUSR1 recibida.\n";
-//     quit_tarea2 = true;
-//   } else if (signal == SIGUSR2) {
-//     message = "Señal SIGUSR2 recibida.\n";
-//     quit_tarea3 = true;
-//   } else if (signal == SIGINT || signal == SIGHUP || signal == SIGTERM) {
-//     message = "\nAlgo malo ha pasado. Cerrando el programa.\n";
-//     quit_app = true;
-//     write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
-//     exit(1);
-//   }
-//   write(STDOUT_FILENO, message.c_str(), strlen(message.c_str()));
-// }
 
-// void signals_waiter () {
-//   sigset_t sigwaitset;
-//   int signals;
-//   sigemptyset(&sigwaitset);
-//   sigaddset(&sigwaitset, SIGINT);
-//   sigaddset(&sigwaitset, SIGTERM);
-//   sigaddset(&sigwaitset, SIGHUP);
-//   sigwait(&sigwaitset, &signals);}
-//   std::thread handler;
-//   handler = std::thread(signal_handler, signals);
+void usr1_funct(int signal) {
+  const char* message = "¡Algo ha ido mal! Señal SIGUSR1 recibida.\n";
+  write(STDOUT_FILENO, message, strlen(message));
+}
+
 
 // MAIN
 int main(int argc, char* argv[]) {
-  struct sigaction signals = {0};
-  signals.sa_handler = &signal_handler;
-  sigaction(SIGINT, &signals, NULL);
-  sigaction(SIGHUP, &signals, NULL);
-  sigaction(SIGTERM, &signals, NULL);
   try {
     protected_main(argc, argv);
   }
@@ -104,22 +81,20 @@ int protected_main(const int& argc, char* argv[]) {
     try {
       std::string help_text = "--help", help_text2 = "-h";
       if (argc == 1) {
-        // sigset_t sigwaitset;
-        // sigemptyset(&sigwaitset);
-        // sigaddset(&sigwaitset, SIGINT);
-        // sigaddset(&sigwaitset, SIGTERM);
-        // sigaddset(&sigwaitset, SIGHUP);
-        // while (true) {
-          // int sign;
-          // sigwait(&sigwaitset, &sign);
-          // if (sign == SIGINT || sign == SIGTERM || sign == SIGHUP) {
-            // std::thread sign_thread(signals_waiter);
-            // sign_thread.detach();
-          // } else {
-            std::thread tarea1_thread(tarea1);
-            tarea1_thread.join();
-          // }
-        // }
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGINT);
+        sigaddset(&set, SIGTERM);
+        sigaddset(&set, SIGHUP);
+        sigaddset(&set, SIGUSR1);
+        sigprocmask(SIG_BLOCK, &set, NULL);
+        std::thread sign_thread(signal_handler, std::ref(set));
+        sign_thread.detach();
+        struct sigaction act = {0};
+        sigaction(SIGUSR1, &act, NULL);
+        act.sa_handler = &usr1_funct;
+        std::thread tarea1_thread(tarea1);
+        tarea1_thread.join();
       } else if (argc == 2) {
         if (argv[1] == help_text || argv[1] == help_text2) {
           help_function();
@@ -161,7 +136,9 @@ int tarea1() {
   std::cout << "Bienvenido a mi Netcp, introduzca el comando.\nSi no sabe qué "
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << " los mostrará." << std::endl;
-  std::thread tarea2, tarea3;
+  std::thread tarea2, tarea3;             //< Los hilos de envío y recepción
+  std::vector<std::pair<int, std::thread>> table;  //< Vector de hilos multiarch
+  int count = 0;
   std::exception_ptr eptr {};
   while (command != "quit" || !quit_app) {
     std::string second_word, first_world;
@@ -188,6 +165,21 @@ int tarea1() {
     switch (registred_commands[command]) {
       case send:                            //< ENVIAR
       {
+        // count++;
+        // table.push_back(std::make_pair(count, std::thread(send_file, std::ref(eptr), second_word,
+        //                    std::ref(quit_tarea2), std::ref(pause_send),
+        //                    std::ref(quit_app)) ) );
+        // std::cout << "1id? " << table[0].second.get_id() << std::endl;
+        // std::cout << "Lista de hilos: " << std::endl;
+        // for (size_t i = 0; i < table.size(); i++) {
+        //   std::cout << "Id: " << table[i].first << std::endl;
+        //   if (table[i].second.joinable()) {
+        //     std::cout << "El hilo " << table[i].first << " puede terminar" << std::endl;
+        //     table[i].second.join();
+        //     table[i].first = 0;
+        //   }
+        // }
+        // std::cout << "2id? " << table[0].second.get_id() << std::endl;
         tarea2 = std::thread(send_file, std::ref(eptr), second_word,
                            std::ref(quit_tarea2), std::ref(pause_send),
                            std::ref(quit_app));
@@ -205,7 +197,7 @@ int tarea1() {
         }
         tarea3 = std::thread(receive_file, std::ref(eptr), second_word,
                              std::ref(quit_tarea3), std::ref(quit_app));
-        kill(tarea3.native_handle(), SIGUSR1);
+        // kill(tarea3.native_handle(), SIGUSR1);
         break;
       }
       case pause:                           //< PAUSE
@@ -219,8 +211,8 @@ int tarea1() {
         if (second_word == "receive") {     //< ABORT RECIBIR
           if (tarea3.joinable()) {
             quit_tarea3 = true;
-            kill(tarea3.native_handle(), SIGUSR1);
-            std::cout << "Recepción abortada." << std::endl;
+            pthread_kill(tarea3.native_handle(), SIGUSR1);
+            // std::cout << "Recepción abortada." << std::endl;
             tarea3.join();
           } else {
             std::cout << "No se ha podido abortar." << std::endl;
@@ -230,7 +222,7 @@ int tarea1() {
           quit_tarea2 = true;
           tarea2.join();
         } else {
-          std::cout << "No se ha podido abortar." << std::endl;
+          std::cout << "No se ha podido abortar, hilo en desuso." << std::endl;
         }
         break;
       }
