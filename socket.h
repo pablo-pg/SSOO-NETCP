@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <exception>
 #include <iostream>
+#include <cstring>
 #include <array>
 #include <vector>
 

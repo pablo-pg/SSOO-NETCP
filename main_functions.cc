@@ -63,7 +63,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     sockaddr_in address_to_send = make_ip_address(
             std::atoi(getenv("NETCP_DEST_PORT")),     //< El puerto pasado a int
             getenv("NETCP_DEST_IP"));
-    Socket remote(make_ip_address(std::atoi(getenv("NETCP_PORT")),
+    Socket remote(make_ip_address(0,
                   getenv("NETCP_IP")));
     remote.send_to(metadata, address_to_send);      //< Se envían los metadatos.
     /// SE ENVÍA LA INFORMACIÓN
@@ -76,7 +76,7 @@ std::this_thread::sleep_for(std::chrono::seconds(2));     //< Hago que espere 2s
         while (pause_send) {
           std::this_thread::yield();
         }
-        remote.send_to(file.GetMappedMem() + (package * MESSAGE_SIZE),
+        remote.send_to(file.GetMappedMem() + (package * (MESSAGE_SIZE - overhead)),
                       address_to_send, MESSAGE_SIZE);
         std::cout << "Paquete " << package+1 << "/" << metadata.packages_number
                   << " enviado." << std::endl;
@@ -104,6 +104,8 @@ std::this_thread::sleep_for(std::chrono::seconds(2));     //< Hago que espere 2s
 int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
   try {
+    std::unordered_map<std::pair<uint32_t, in_port_t>, ReceptionTask, pair_hash>
+        receiving_tasks;
     Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
                 getenv("NETCP_DEST_IP")));
     while (!quit_app && !quit_tarea3) {
@@ -126,20 +128,20 @@ int receive_file(std::exception_ptr& eptr, std::string folder,
           } else {
             /// SE RECIBE EL MENSAJE Y SE MAPEA EN MEMORIA.
             local.receive_from(address_to_receive,
-                  file.GetMappedMem() + (i * MESSAGE_SIZE), MESSAGE_SIZE);
+                  file.GetMappedMem() + (i * (MESSAGE_SIZE - overhead)), MESSAGE_SIZE);
             std::cout << "Paquete " << i+1 << "/" << metadata.packages_number
                       << " recibido." << std::endl;
           }
         }    /// Se escribe en memoria el último paquete.
-        if (metadata.file_size % MESSAGE_SIZE != 0) {
+        if ((metadata.file_size + overhead) % MESSAGE_SIZE != 0) {
           local.receive_from(address_to_receive,
-            file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
-            metadata.file_size % MESSAGE_SIZE);
-          std::cout << "Paquete " << metadata.packages_number << "/"
+            file.GetMappedMem() + ((metadata.packages_number - 1) * (MESSAGE_SIZE - overhead)),
+            (metadata.file_size + metadata.packages_number * overhead) % MESSAGE_SIZE);
+          std::cout << "Paquete pequeño " << metadata.packages_number << "/"
                     << metadata.packages_number << " recibido." << std::endl;
         } else {
           local.receive_from(address_to_receive,
-            file.GetMappedMem() + (metadata.packages_number - 1) * MESSAGE_SIZE,
+            file.GetMappedMem() + ((metadata.packages_number - 1) * (MESSAGE_SIZE - overhead)),
             MESSAGE_SIZE);
           std::cout << "Paquete " << metadata.packages_number << "/"
                     << metadata.packages_number << " recibido." << std::endl;
@@ -194,12 +196,7 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
   } else {
     inet_aton(ip_address.c_str(), &direction.sin_addr);
   }
-// std::cout << std::endl;
-// std::cout << "Puerto: " << direction.sin_port << " (" << port << ")"
-//           << std::endl;
-// std::cout << "Direccion: " << direction.sin_addr.s_addr << " (" << ip_address
-//           << ")" << std::endl << std::endl;
-  if (port > 65525 || port < 1) {
+  if (port > 65525 || port < 0) {
     throw std::system_error(errno, std::system_category(),
                             "Puerto fuera de rango: " + port);
   }
@@ -222,7 +219,6 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
   for (size_t i{0}; i < filename.size(); i++) {
     metadata.filename.at(i) = filename.at(i);
   }
-std::cout << "dir: " << dir, 
   metadata.direction = dir;
   metadata.port = the_port;
   metadata.filename.at(filename.size()) = '\0';
@@ -240,7 +236,6 @@ std::cout << "dir: " << dir,
  */
 void move_file(const std::array<char, 1024UL>& file_name,
                const std::string & folder_name) {
-std::cout << "Move" << std::endl;
   std::string cmd_str;
   cmd_str.append("mv ");
   cmd_str.append(get_current_dir_name());
@@ -254,9 +249,7 @@ std::cout << "Move" << std::endl;
   char cmd[200];
   // std::cout << cmd_str << std::endl;
   std::strcpy(cmd, cmd_str.c_str());
-std::cout << "Antes del systemç" << std::endl;
   system(cmd);
-  std::cout << "Final" << std::endl;
 }
 
 

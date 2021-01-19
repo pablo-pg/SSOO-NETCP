@@ -37,9 +37,17 @@ Socket::~Socket() {
 // std::cout << "close (fd): " << fd_ << std::endl;
 }
 
-void Socket::send_to(const void* message, const sockaddr_in& address,
+void Socket::send_to(const void* mem_zone, const sockaddr_in& address,
                      const int& size) {
-  int result = sendto(fd_, message, size, 0,
+  Message message;
+  sockaddr_in socket_data;
+  socklen_t addrlen = sizeof(socket_data);
+getsockname(fd_, reinterpret_cast<sockaddr*>(&socket_data), &addrlen);
+  message.port = socket_data.sin_port;
+  message.direction = socket_data.sin_addr.s_addr;
+std::cout << "Puerto: " << socket_data.sin_port << std::endl;
+  memcpy(message.msg, mem_zone, size - overhead);
+  int result = sendto(fd_, &message, size, 0,
                       reinterpret_cast<const sockaddr*>(&address),
                       sizeof(address));
   if (result < 0) {
@@ -69,10 +77,14 @@ void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
   sockaddr* remote_address = NULL;
   //   socklen_t src_len = sizeof(address);
   // sockaddr_in remote_address = address;
-  int result = recvfrom(fd_, mem_zone, size, 0,
+  Message message;
+  int result = recvfrom(fd_, &message, size, 0,
                     remote_address,  src_len);
-    if (remote_address == NULL)
-  std::cout << "remote: " << remote_address << " - Src_len: " << src_len << std::endl;
+  memcpy(mem_zone, message.msg, size - overhead);
+  std::cout << "Puerto: " << message.port << std::endl;
+
+    // if (remote_address == NULL)
+  // std::cout << "remote: " << remote_address << " - Src_len: " << src_len << std::endl;
 
 //   int result = recvfrom(fd_, mem_zone, size, 0,
                       // reinterpret_cast<sockaddr*>(&remote_address), &src_len);

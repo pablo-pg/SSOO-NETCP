@@ -21,7 +21,10 @@
 #define PATH_MAX 1024
 #define MESSAGE_SIZE 1024
 
+const int overhead = sizeof(uint32_t) + sizeof(in_port_t);
+
 struct FileMetadata {
+  char is_data = 0;
   std::array<char, PATH_MAX> filename;
   struct stat file_info;
   size_t file_size;
@@ -33,7 +36,6 @@ struct FileMetadata {
     if ((size % MESSAGE_SIZE) != 0) {
       num++;
     }
-    int overhead = sizeof(uint32_t) + sizeof(in_port_t);
     int total_size = overhead * num + size;
     int total_packages = total_size / MESSAGE_SIZE;
     if ((total_size % MESSAGE_SIZE) != 0) {
@@ -45,9 +47,11 @@ struct FileMetadata {
 };
 
 struct Message {
+  char is_data = 1;
   uint32_t direction;
   in_port_t port;
-  void * zone_mem;
-}
+  // const void * zone_mem;
+  char msg[MESSAGE_SIZE-overhead];
+};
 
 #endif  // MESSAGE_H_

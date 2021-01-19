@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <unordered_map>
 
 #include "./file.h"
 #include "./message.h"
@@ -86,8 +87,18 @@ struct SendingTask{
 };
 
 struct ReceptionTask {
-  std::thread receive_thread;
-  bool received = 0;
+  int fd;
+  uint size;
+  void* mem_zone;
 };
 
+
+struct pair_hash {
+  template <class T1, class T2>
+  std::size_t operator () (const std::pair<T1,T2> &p) const {
+    auto h1 = std::hash<T1>{}(p.first);
+    auto h2 = std::hash<T2>{}(p.second);
+    return h1 ^ h2;  
+  }
+};
 #endif  // MAIN_FUNCTIONS_H_

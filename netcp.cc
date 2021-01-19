@@ -130,8 +130,6 @@ int tarea1() {
             << " los mostrará." << std::endl;
   std::thread tarea2, tarea3;             //< Los hilos de envío y recepción
   std::vector<std::pair<int, std::thread>> tabla;  //< Vector de hilos multiarch
-  std::vector<std::pair<std::pair<uint32_t, in_port_t>, std::thread>> receiving_tasks;
-  std::deque<std::atomic_bool> is_sent;
   int count = 0;
   std::exception_ptr eptr {};
   while (command != "quit" || !quit_app) {
@@ -160,6 +158,16 @@ int tarea1() {
       case send:                            //< ENVIAR
       {
         count++;
+
+
+
+
+
+
+
+
+
+
         // std::atomic<bool> sent{false};
         // is_sent.emplace_back(sent);
         // SendingTask task;
