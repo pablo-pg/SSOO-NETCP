@@ -17,6 +17,7 @@
 #include <atomic>
 #include <csignal>
 #include <cstring>
+#include <deque>
 #include <iostream>
 #include <map>
 #include <string>
@@ -128,7 +129,9 @@ int tarea1() {
             << "comandos se pueden añadir, puede usar el comando \"help\" y se"
             << " los mostrará." << std::endl;
   std::thread tarea2, tarea3;             //< Los hilos de envío y recepción
-  std::vector<std::pair<int, std::thread>> table;  //< Vector de hilos multiarch
+  std::vector<std::pair<int, std::thread>> tabla;  //< Vector de hilos multiarch
+  std::vector<std::pair<std::pair<uint32_t, in_port_t>, std::thread>> receiving_tasks;
+  std::deque<std::atomic_bool> is_sent;
   int count = 0;
   std::exception_ptr eptr {};
   while (command != "quit" || !quit_app) {
@@ -157,20 +160,33 @@ int tarea1() {
       case send:                            //< ENVIAR
       {
         count++;
-table.push_back(std::make_pair(count, std::thread(send_file, std::ref(eptr), second_word,
+        // std::atomic<bool> sent{false};
+        // is_sent.emplace_back(sent);
+        // SendingTask task;
+        // task.send_thread = std::thread(make_send, std::ref(eptr), second_word,
+        //                    std::ref(quit_tarea2), std::ref(pause_send),
+        //                    std::ref(quit_app));
+        // std::pair<int, SendingTask> temp;
+        // temp.first = count;
+        // temp.second = task;
+        // tabla.push_back(std::make_pair(count, task));
+         in_port_t port = std::atoi("NETCP_PORT");
+         uint32_t direction;
+        //  memcpy(&direction, getenv("NETCP_ID"),);
+        //  uint32_t direction = htonl(getenv("NETCP_IP"));
+        tabla.push_back(std::make_pair(count, std::thread(make_send, std::ref(eptr), second_word,
                            std::ref(quit_tarea2), std::ref(pause_send),
-                           std::ref(quit_app))));
-        std::cout << "1id? " << table[0].second.get_id() << std::endl;
+                           std::ref(quit_app), direction, port)));
         std::cout << "Lista de hilos: " << std::endl;
-        for (size_t i = 0; i < table.size(); i++) {
-          std::cout << "Id: " << table[i].first << std::endl;
-          if (table[i].second.joinable()) {
-            std::cout << "El hilo " << table[i].first << " puede terminar" << std::endl;
-            table[i].second.join();
-            // table[i].first = 0;
-          }
+        for (size_t i = 0; i < tabla.size(); i++) {
+          std::cout << "Id: " << tabla[i].first << std::endl;
+        //   if (tabla[i].second.joinable()) {
+        //     std::cout << "El hilo " << tabla[i].first << " puede terminar"
+        //               << std::endl;
+        //     tabla[i].second.join();
+        //     tabla[i].first = 0;
         }
-        std::cout << "2id? " << table[0].second.get_id() << std::endl;
+        // std::cout << "2id? " << tabla[0].second.get_id() << std::endl;
         break;
       }
       case receive:                         //< RECIBIR
@@ -183,9 +199,15 @@ table.push_back(std::make_pair(count, std::thread(send_file, std::ref(eptr), sec
         } else {
           std::cout << "Carpeta creada." << std::endl;
         }
+
+        std::pair<uint32_t, in_port_t> direction;
+        // receiving_tasks.push_back(std::make_pair(direction,
+        //               std::thread(make_receive, std::ref(eptr), second_word,
+        //                    std::ref(quit_tarea3), std::ref(quit_app))));
         tarea3 = std::thread(receive_file, std::ref(eptr), second_word,
                              std::ref(quit_tarea3), std::ref(quit_app));
         // kill(tarea3.native_handle(), SIGUSR1);
+        tarea3.detach();
         break;
       }
       case pause:                           //< PAUSE

@@ -44,7 +44,8 @@ void help_function() {
  */
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app) {
+              std::atomic<bool>& quit_app, const uint32_t& direction,
+              const in_port_t port) {
   try {
     if (quit_tarea2 || quit_app) {
       return 0;
@@ -57,11 +58,11 @@ int send_file(std::exception_ptr& eptr, std::string argv,
     File file(filename);
     /// Se establecen los metadatos del fichero.
     FileMetadata metadata;
-    metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo());
+    metadata = SetMetadata(file.GetData(), filename, file.GetMetaInfo(),
+                           direction, port);
     sockaddr_in address_to_send = make_ip_address(
             std::atoi(getenv("NETCP_DEST_PORT")),     //< El puerto pasado a int
             getenv("NETCP_DEST_IP"));
-    /// Se prepara el socket que se envía.
     Socket remote(make_ip_address(std::atoi(getenv("NETCP_PORT")),
                   getenv("NETCP_IP")));
     remote.send_to(metadata, address_to_send);      //< Se envían los metadatos.
@@ -71,7 +72,7 @@ int send_file(std::exception_ptr& eptr, std::string argv,
         std::cout << "Envío abortado." << std::endl;
         return 0;
       } else {
-std::this_thread::sleep_for(std::chrono::seconds(5));     //< Hago que espere 2s
+std::this_thread::sleep_for(std::chrono::seconds(2));     //< Hago que espere 2s
         while (pause_send) {
           std::this_thread::yield();
         }
@@ -103,10 +104,10 @@ std::this_thread::sleep_for(std::chrono::seconds(5));     //< Hago que espere 2s
 int receive_file(std::exception_ptr& eptr, std::string folder,
                  std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
   try {
-    if (!quit_app && !quit_tarea3) {
+    Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
+                getenv("NETCP_DEST_IP")));
+    while (!quit_app && !quit_tarea3) {
       /// Se establecen las direcciones  puertos.
-      Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
-                  getenv("NETCP_DEST_IP")));
       sockaddr_in address_to_receive = make_ip_address(
                   std::atoi(getenv("NETCP_PORT")), getenv("NETCP_IP"));
       FileMetadata metadata;
@@ -215,11 +216,15 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address) {
  * @return FileMetadata es la estructura con todos los metadatos.
  */
 FileMetadata SetMetadata(const std::string& text, const std::string& filename,
-                          const struct stat& meta_info) {
+                          const struct stat& meta_info, const uint32_t& dir,
+                          const in_port_t& the_port) {
   FileMetadata metadata;
   for (size_t i{0}; i < filename.size(); i++) {
     metadata.filename.at(i) = filename.at(i);
   }
+std::cout << "dir: " << dir, 
+  metadata.direction = dir;
+  metadata.port = the_port;
   metadata.filename.at(filename.size()) = '\0';
   metadata.file_size = text.size();
   metadata.packages_number = metadata.calculate_message_num(metadata.file_size);
@@ -235,6 +240,7 @@ FileMetadata SetMetadata(const std::string& text, const std::string& filename,
  */
 void move_file(const std::array<char, 1024UL>& file_name,
                const std::string & folder_name) {
+std::cout << "Move" << std::endl;
   std::string cmd_str;
   cmd_str.append("mv ");
   cmd_str.append(get_current_dir_name());
@@ -245,20 +251,34 @@ void move_file(const std::array<char, 1024UL>& file_name,
   cmd_str.append(folder_name);
   cmd_str.append("/");
   cmd_str.append(file_name.data());
-  char* cmd;
+  char cmd[200];
   // std::cout << cmd_str << std::endl;
   std::strcpy(cmd, cmd_str.c_str());
+std::cout << "Antes del systemç" << std::endl;
   system(cmd);
+  std::cout << "Final" << std::endl;
 }
 
 
-void make_send(std::exception_ptr& eptr, std::string second_word,
+void make_send(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app, std::atomic<bool>& pause_send_task,
-              std::atomic<bool>& abort_send_task) {
+              std::atomic<bool>& quit_app, const uint32_t& direction,
+              const in_port_t port) {
   std::thread send_thread;
-  send_thread = std::thread(send_file, std::ref(eptr), second_word,
+  send_thread = std::thread(send_file, std::ref(eptr), argv,
                            std::ref(quit_tarea2), std::ref(pause_send),
-                           std::ref(quit_app));
+                           std::ref(quit_app), direction, port);
   send_thread.join();
+  std::cout << "ENVIADO" << std::endl;
+  // sent = true;
+}
+
+void make_receive(std::exception_ptr& eptr, std::string folder,
+              std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app) {
+  std::thread receive_thread;
+  Socket local(make_ip_address(std::atoi(getenv("NETCP_DEST_PORT")),
+                  getenv("NETCP_DEST_IP")));
+  receive_thread = std::thread(receive_file, std::ref(eptr), folder,
+              std::ref(quit_tarea3), std::ref(quit_app));
+  receive_thread.join();
 }

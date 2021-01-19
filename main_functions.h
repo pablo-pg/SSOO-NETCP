@@ -24,6 +24,7 @@
 #include <csignal>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -39,7 +40,8 @@
 void help_function();
 int send_file(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app);
+              std::atomic<bool>& quit_app, const uint32_t& direction,
+              const in_port_t port);
 int receive_file(std::exception_ptr& eptr, std::string folder,
               std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app);
 
@@ -54,24 +56,38 @@ sockaddr_in make_ip_address(int port, const std::string& ip_address =
                             std::string());
 
 FileMetadata SetMetadata(const std::string& text, const std::string& filename,
-                          const struct stat& meta_info);
+                         const struct stat& meta_info, const uint32_t& dir,
+                         const in_port_t& the_port);
 
 void move_file(const std::array<char, 1024UL>& file_name,
                const std::string& folder_name);
 
 void make_send(std::exception_ptr& eptr, std::string argv,
               std::atomic<bool>& quit_tarea2, std::atomic<bool>& pause_send,
-              std::atomic<bool>& quit_app, std::atomic<bool>& pause_send_task,
-              std::atomic<bool>& abort_send_task);
+              std::atomic<bool>& quit_app, const uint32_t& direction,
+              const in_port_t port);
 
+void make_receive(std::exception_ptr& eptr, std::string folder,
+              std::atomic<bool>& quit_tarea3, std::atomic<bool>& quit_app);
 
 /// STRUCTS
 
+// template <typename F, typename U/*, typename V*/>
 struct SendingTask{
-  std::thread send_thread;
-  bool sent = 0;
-  std::atomic<bool> pause_send_task{false};
-  std::atomic<bool> abort_send_task{false};
+//  public:
+  // inlindeSendingTask(const std::thread&) {
+
+  // }
+//  private:
+  std::unique_ptr<std::thread> send_thread;
+  // std::unique_ptr<bool> sent(new bool(false));
+  // V pause_send_task{false};
+  // V abort_send_task{false};
+};
+
+struct ReceptionTask {
+  std::thread receive_thread;
+  bool received = 0;
 };
 
 #endif  // MAIN_FUNCTIONS_H_

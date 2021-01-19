@@ -64,10 +64,18 @@ void Socket::send_to(const FileMetadata& metadata, const sockaddr_in& address) {
 void Socket::receive_from(const sockaddr_in& address, void* mem_zone,
                           const int& size) {
   // std::cout << "Esperando mensaje..." << std::endl;
-  socklen_t src_len = sizeof(address);
-  sockaddr_in remote_address = address;
+  socklen_t* src_len = NULL;
+  // sockaddr_in remote_address = NULL;
+  sockaddr* remote_address = NULL;
+  //   socklen_t src_len = sizeof(address);
+  // sockaddr_in remote_address = address;
   int result = recvfrom(fd_, mem_zone, size, 0,
-                      reinterpret_cast<sockaddr*>(&remote_address), &src_len);
+                    remote_address,  src_len);
+    if (remote_address == NULL)
+  std::cout << "remote: " << remote_address << " - Src_len: " << src_len << std::endl;
+
+//   int result = recvfrom(fd_, mem_zone, size, 0,
+                      // reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
     // if (errno != EINTR) {
       throw std::system_error(errno, std::system_category(),
@@ -82,7 +90,9 @@ FileMetadata Socket::receive_metadata(const sockaddr_in& address) {
   socklen_t src_len = sizeof(address);
   sockaddr_in remote_address = address;
   int result = recvfrom(fd_, &metadata, sizeof(metadata), 0,
-                      reinterpret_cast<sockaddr*>(&remote_address), &src_len);
+                      NULL, NULL);
+  // int result = recvfrom(fd_, &metadata, sizeof(metadata), 0,
+  //                     reinterpret_cast<sockaddr*>(&remote_address), &src_len);
   if (result < 0) {
     // if (errno != EINTR) {
       throw std::system_error(errno, std::system_category(),
